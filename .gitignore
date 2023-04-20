@@ -19,3 +19,10 @@ pnpm-debug.log*
 
 # macOS-specific files
 .DS_Store
+
+# sqlite3
+articles.db
+articles.db-shm
+articles.db-wal
+
+public/articles

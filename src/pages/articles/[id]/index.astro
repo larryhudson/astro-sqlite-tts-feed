@@ -1,0 +1,9 @@
+---
+import { getArticle } from "../../../utils/db";
+
+const article = await getArticle(Astro.params.id);
+---
+
+<pre>
+    {JSON.stringify(article, null, 2)}
+</pre>

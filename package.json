@@ -10,6 +10,14 @@
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^2.3.0"
+    "@astrojs/node": "^5.1.1",
+    "@astrojs/rss": "^2.3.2",
+    "@extractus/article-extractor": "^7.2.14",
+    "astro": "^2.3.0",
+    "better-sqlite3": "^8.3.0",
+    "html-entities": "^2.3.3",
+    "html-to-text": "^9.0.5",
+    "js-md5": "^0.7.3",
+    "p-map": "^5.5.0"
   }
 }

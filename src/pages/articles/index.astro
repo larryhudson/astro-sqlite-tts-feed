@@ -1,0 +1,81 @@
+---
+import { createArticle, getArticles } from "../../utils/db";
+import { extractArticle } from "../../utils/extract-article";
+import { getAudioBufferForText } from "../../utils/azure-tts";
+import md5 from "js-md5";
+import path from "node:path";
+import fs from "node:fs/promises";
+
+if (Astro.request.method === "POST") {
+  const formData = await Astro.request.formData();
+  const { title, url } = Object.fromEntries(formData.entries());
+  const articleContent = extractArticle(url);
+  const articleAudio = getAudioBufferForText(articleContent);
+  const articleHash = md5(articleContent);
+  const articlePath = path.join("public", "articles", `${articleHash}.mp3`);
+
+  await fs.writeFile(articlePath, articleAudio);
+
+  const createdArticle = createArticle(
+    title,
+    url,
+    `/articles/${articleHash}.mp3`
+  );
+}
+
+const articles = getArticles();
+---
+
+<h1>Articles</h1>
+<table>
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>URL</th>
+      <th>Audio</th>
+    </tr>
+  </thead>
+  <tbody>
+    {
+      articles.map((article) => (
+        <tr>
+          <td>{article.title}</td>
+          <td>{article.url}</td>
+          <td>
+            {article.mp3Url ? (
+              <audio controls>
+                <source src={article.mp3Url} type="audio/mpeg" />
+              </audio>
+            ) : (
+              <form method="POST" action={`/articles/${article.id}/audio`}>
+                <button type="submit">Get audio</button>
+              </form>
+            )}
+          </td>
+        </tr>
+      ))
+    }
+  </tbody>
+</table>
+<ul>
+  {
+    articles.map((article) => (
+      <li>
+        <a href={article.url}>{article.title}</a>
+      </li>
+    ))
+  }
+</ul>
+
+<h2>Add new</h2>
+<form method="POST">
+  <label>
+    Title
+    <input type="text" name="title" />
+  </label>
+  <label>
+    URL
+    <input type="text" name="url" />
+  </label>
+  <button type="submit">Add</button>
+</form>
