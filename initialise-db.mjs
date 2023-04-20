@@ -16,7 +16,10 @@ async function initialise() {
       url TEXT NOT NULL,
       read_at TIMESTAMP NULL,
       added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      mp3Url TEXT NULL,
+      mp3Duration TEXT NULL,
+      mp3Length INTEGER NULL
     )`
   );
   createArticlesTable.run();

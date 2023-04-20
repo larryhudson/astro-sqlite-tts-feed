@@ -1,5 +1,4 @@
 import { getArticlesWithMp3Url } from "../utils/db";
-import rss from "@astrojs/rss";
 
 export async function get(context) {
   const articles = getArticlesWithMp3Url();

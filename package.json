@@ -15,9 +15,11 @@
     "@extractus/article-extractor": "^7.2.14",
     "astro": "^2.3.0",
     "better-sqlite3": "^8.3.0",
+    "get-audio-duration": "^3.1.1",
     "html-entities": "^2.3.3",
     "html-to-text": "^9.0.5",
     "js-md5": "^0.7.3",
+    "mp3-duration": "^1.1.0",
     "p-map": "^5.5.0"
   }
 }

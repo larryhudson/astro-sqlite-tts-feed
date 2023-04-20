@@ -21,11 +21,11 @@ export function getArticle(id) {
   return article;
 }
 
-export function createArticle(title, url, mp3Url) {
+export function createArticle(title, url, mp3Url, mp3Duration, mp3Length) {
   const createArticleStatement = db.prepare(
-    "INSERT INTO articles (title, url, mp3Url) VALUES (?, ?, ?)"
+    "INSERT INTO articles (title, url, mp3Url, mp3Duration, mp3Length) VALUES (?, ?, ?, ?, ?)"
   );
-  return createArticleStatement.run(title, url);
+  return createArticleStatement.run(title, url, mp3Url, mp3Duration, mp3Length);
 }
 
 export function updateArticle(id, title, url, mp3Url) {
