@@ -3,11 +3,13 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "dev-task-queue": "node consumeTasks.mjs",
+    "dev-astro": "astro dev",
+    "dev": "concurrently \"npm:dev-*\""
   },
   "dependencies": {
     "@astrojs/node": "^5.2.0",
@@ -23,5 +25,8 @@
     "js-md5": "^0.7.3",
     "mp3-duration": "^1.1.0",
     "p-map": "^6.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
   }
 }
