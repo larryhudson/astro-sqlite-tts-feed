@@ -1,6 +1,6 @@
 import { getArticlesWithMp3Url } from "../utils/db";
 
-export async function get(context) {
+export async function all(context) {
   const articles = getArticlesWithMp3Url();
   const podcast = {
     title: "TTS Feed",
