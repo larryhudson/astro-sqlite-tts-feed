@@ -60,7 +60,7 @@ export async function get(context) {
         <enclosure url="${podcast.site}${
           article.mp3Url
         }" type="audio/mpeg" length="${article.mp3Length}" />
-        <itunes:duration>${article.mp3uration}</itunes:duration>
+        <itunes:duration>${article.mp3Duration}</itunes:duration>
         <guid isPermaLink="false">${article.mp3Url}</guid>
         <itunes:explicit>no</itunes:explicit>
         <description>${article.url}</description>

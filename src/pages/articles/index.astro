@@ -1,18 +1,26 @@
 ---
-import {createArticle} from "../../../tasks/createArticle"
 import {getArticles} from "../../utils/db"
+import {Queue} from "bullmq"
 
+let statusMessage;
 
 if (Astro.request.method === "POST") {
-  console.log("posting!");
+  const taskQueue = new Queue('createArticle');
   const formData = await Astro.request.formData();
   const { title, url } = Object.fromEntries(formData.entries());
-  await createArticle({title, url}) 
+  taskQueue.add('createArticle', {title, url});  
+  statusMessage = 'Added to queue!';
 }
+
 const articles = getArticles();
 ---
 
 <h1>Articles</h1>
+
+{statusMessage && (
+<p>Status message: {statusMessage}</p>
+)}
+
 <table>
   <thead>
     <tr>
@@ -43,6 +51,13 @@ const articles = getArticles();
     }
   </tbody>
 </table>
+
+<details>
+  <summary>Dump</summary>
+  <div>
+    <pre>{JSON.stringify(articles,null,2)}</pre>
+  </div>
+</details>
 
 <h2>Add new</h2>
 <form method="POST">

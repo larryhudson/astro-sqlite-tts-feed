@@ -1,11 +1,12 @@
 import { createArticleInDb } from "../src/utils/db.js";
 import { extractArticle } from "../src/utils/extract-article.js";
 import { getAudioBufferForText } from "../src/utils/azure-tts.js";
-import getAudioDurationInSeconds from "get-audio-duration";
+import { getAudioDurationInSeconds } from "get-audio-duration";
 import md5 from "js-md5";
 import path from "node:path";
 import fs from "node:fs/promises";
 import { secsToMMSS } from "../src/utils/time.js";
+import "dotenv/config";
 
 export async function createArticle({url, title}) {
 
@@ -26,10 +27,22 @@ export async function createArticle({url, title}) {
   }
 
   await fs.writeFile(articlePath, articleAudio);
+
+  console.log("Wrote the file to the path");
+
   const durationSecs = await getAudioDurationInSeconds(articlePath);
+
   const mp3Duration = secsToMMSS(durationSecs);
 
-  const mp3Length = await fs.stat(articlePath).size;
+  console.log({durationSecs, mp3Duration});
+
+  const mp3FileStats = await fs.stat(articlePath);
+
+  console.log({mp3FileStats});
+
+  const mp3Length = mp3FileStats.size;
+
+  console.log({mp3Length})
 
   const articleInDb = createArticleInDb({
     title,
