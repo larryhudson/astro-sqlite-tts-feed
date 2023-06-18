@@ -1,7 +1,10 @@
 import Database from "better-sqlite3";
 import fs from "fs";
+import path from "path";
 
-const db = new Database("articles.db", {
+const dbPath = path.resolve("articles.db");
+
+const db = new Database(dbPath, {
   verbose: console.log,
 });
 db.pragma("journal_mode = WAL");

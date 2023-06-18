@@ -1,10 +1,12 @@
 import Database from "better-sqlite3";
-
+import path from "path";
 // Having trouble with the path to the DB file.
 // will need to try to work out how to figure out the project root path
 // Eg: https://stackoverflow.com/questions/10265798/determine-project-root-from-a-running-node-js-application
 
-const db = new Database("articles.db", {
+const dbFilePath = path.resolve('articles.db');
+
+const db = new Database(dbFilePath, {
   verbose: console.log,
 });
 db.pragma("journal_mode = WAL");
