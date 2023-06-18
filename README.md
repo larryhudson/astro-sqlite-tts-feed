@@ -14,6 +14,7 @@
 - Clone repo
 - run `npm install`
 - Copy .env.sample to .env and fill in API key and API region from Azure TTS API
+- run `node initialise-db.mjs` to setup the sqlite database.
 - Install Redis
     - On Arch Linux, I used:
         ```bash
