@@ -1,3 +1,21 @@
+# TTS podcast feed with Astro and Azure TTS
+
+## What this is
+
+- A web app that makes it possible to save articles you want to read.
+- It generates an audio version of the article using Azure TTS, and saves the content into a sqlite3 database.
+- It gives you a podcast feed you can subscribe to.
+
+## Where this is up to
+- The work to add a new article (extract content, generate audio, save to DB) happens inside the HTTP request, so the web browser loading spinner is spinning while the work is going on. To improve the user experience and make this more robust, I want to move this work to a separate task queue. I am looking at BullMQ + Redis, or RabbitMQ. That way, the task queue can work through the articles and it doesn't matter if you close the web browser. This is important as I want to be able to give the app longer articles.
+    - I need to play around with setting up Redis, then using Bull to connect to Redis.
+    - Inside the '/articles' POST request, the Astro frontend should use Bull to create a new task.
+    - There should be a separate process running that is a 'consumer' that works through the tasks in the queue.
+    - I will need to play around with deploying this on a simple VPS server.
+    - It might be worth exploring how this can be deployed inside a Docker container, for easier provisioning.
+- I would like to add a separate JSON API so that I can create an Apple Shortcut to add a new article to the web app. This should be fairly simple.
+
+
 # Astro Starter Kit: Minimal
 
 ```
