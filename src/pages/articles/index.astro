@@ -1,41 +1,14 @@
 ---
-import { createArticle, getArticles } from "../../utils/db";
-import { extractArticle } from "../../utils/extract-article";
-import { getAudioBufferForText } from "../../utils/azure-tts";
-import getAudioDurationInSeconds from "get-audio-duration";
-import md5 from "js-md5";
-import path from "node:path";
-import fs from "node:fs/promises";
-import { secsToMMSS } from "../../utils/time";
+import {createArticle} from "../../../tasks/createArticle"
+import {getArticles} from "../../utils/db"
 
-console.log(Astro.request.method);
 
 if (Astro.request.method === "POST") {
   console.log("posting!");
   const formData = await Astro.request.formData();
   const { title, url } = Object.fromEntries(formData.entries());
-  const articleContent = await extractArticle(url);
-  const articleAudio = await getAudioBufferForText(articleContent);
-  const articleHash = md5(articleContent);
-  const articlePath = path.join("public", "articles", `${articleHash}.mp3`);
-
-  console.log(articlePath);
-
-  await fs.writeFile(articlePath, articleAudio);
-  const durationSecs = await getAudioDurationInSeconds(articlePath);
-  const duration = secsToMMSS(durationSecs);
-
-  const mp3Length = await fs.stat(articlePath).size;
-
-  const createdArticle = createArticle(
-    title,
-    url,
-    `/articles/${articleHash}.mp3`,
-    duration,
-    mp3Length
-  );
+  await createArticle({title, url}) 
 }
-
 const articles = getArticles();
 ---
 

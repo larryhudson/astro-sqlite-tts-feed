@@ -21,7 +21,7 @@ export function getArticle(id) {
   return article;
 }
 
-export function createArticle(title, url, mp3Url, mp3Duration, mp3Length) {
+export function createArticleInDb({title, url, mp3Url, mp3Duration, mp3Length}) {
   const createArticleStatement = db.prepare(
     "INSERT INTO articles (title, url, mp3Url, mp3Duration, mp3Length) VALUES (?, ?, ?, ?, ?)"
   );
