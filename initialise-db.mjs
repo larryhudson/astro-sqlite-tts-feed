@@ -25,14 +25,6 @@ async function initialise() {
   createArticlesTable.run();
 }
 
-async function addColumn() {
-  const addMp3LengthColumn = db.prepare(
-    // add a column for number of bytes in the mp3 file
-    `ALTER TABLE articles ADD COLUMN mp3Length INTEGER NULL`
-  );
-  addMp3LengthColumn.run();
-}
-
 async function setMp3Length() {
   // get articles with mp3Url
   const articles = db
@@ -51,4 +43,4 @@ async function setMp3Length() {
   });
 }
 
-setMp3Length();
+initialise();
