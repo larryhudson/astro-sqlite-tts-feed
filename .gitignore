@@ -25,4 +25,4 @@ articles.db
 articles.db-shm
 articles.db-wal
 
-public/articles
+static/articles

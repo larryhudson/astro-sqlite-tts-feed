@@ -13,11 +13,11 @@ export async function createArticle({url, title}) {
   const articleContent = await extractArticle(url);
   const articleAudio = await getAudioBufferForText(articleContent);
   const articleHash = md5(articleContent);
-  const articlePath = path.join("public", "articles", `${articleHash}.mp3`);
+  const articlePath = path.join("static", "articles", `${articleHash}.mp3`);
 
   console.log(articlePath);
 
-  const articlesFolderPath = path.join("public", "articles");
+  const articlesFolderPath = path.join("static", "articles");
 
   // Check articles folder exists. If it doesn't, create it.
   try {
@@ -47,7 +47,7 @@ export async function createArticle({url, title}) {
   const articleInDb = createArticleInDb({
     title,
     url,
-    mp3Url: `/articles/${articleHash}.mp3`,
+    mp3Url: `/static/articles/${articleHash}.mp3`,
     mp3Duration,
     mp3Length
   });
