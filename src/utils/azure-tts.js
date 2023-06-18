@@ -24,13 +24,13 @@ async function getAudioBufferForChunk(text) {
   console.log("getting audio for text");
   console.log(text);
 
-  const AZURE_API_KEY = import.meta.env.PUBLIC_AZURE_API_KEY;
-  const AZURE_REGION = import.meta.env.PUBLIC_AZURE_REGION;
+  const AZURE_API_KEY = import.meta.env.AZURE_API_KEY;
+  const AZURE_API_REGION = import.meta.env.AZURE_API_REGION;
 
   const voiceName = "en-AU-WilliamNeural";
   const ttsLang = "en-AU";
 
-  const ttsUrl = `https://${AZURE_REGION}.tts.speech.microsoft.com/cognitiveservices/v1`;
+  const ttsUrl = `https://${AZURE_API_REGION}.tts.speech.microsoft.com/cognitiveservices/v1`;
 
   const response = await fetch(ttsUrl, {
     method: "POST",
