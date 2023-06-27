@@ -1,5 +1,5 @@
 ---
-import {getArticles} from "../../utils/db"
+import {getArticles, createArticleInDb } from "../../utils/db"
 import {Queue} from "bullmq"
 
 let statusMessage;
@@ -8,7 +8,15 @@ if (Astro.request.method === "POST") {
   const taskQueue = new Queue('createArticle');
   const formData = await Astro.request.formData();
   const { title, url } = Object.fromEntries(formData.entries());
-  taskQueue.add('createArticle', {title, url});  
+
+  // TODO: instead of passing directly to bull task, should create new record in DB
+  // then pass the DB ID to the bull task.
+  const createdArticleId = createArticleInDb({
+    title,
+    url,
+    });
+
+  taskQueue.add('createArticle', {articleId: createdArticleId});  
   statusMessage = 'Added to queue!';
 }
 

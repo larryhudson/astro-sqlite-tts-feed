@@ -22,7 +22,9 @@ async function initialise() {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       mp3Url TEXT NULL,
       mp3Duration TEXT NULL,
-      mp3Length INTEGER NULL
+      mp3Length INTEGER NULL,
+      status TEXT NULL,
+      type TEXT NULL
     )`
   );
   createArticlesTable.run();

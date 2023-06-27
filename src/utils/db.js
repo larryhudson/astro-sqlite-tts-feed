@@ -23,7 +23,7 @@ export function getArticlesWithMp3Url() {
   return articles;
 }
 
-export function getArticle(id) {
+export function getArticleFromDb(id) {
   const article = db.prepare("SELECT * FROM articles WHERE id = ?").get(id);
   return article;
 }
@@ -32,12 +32,26 @@ export function createArticleInDb({title, url, mp3Url, mp3Duration, mp3Length}) 
   const createArticleStatement = db.prepare(
     "INSERT INTO articles (title, url, mp3Url, mp3Duration, mp3Length) VALUES (?, ?, ?, ?, ?)"
   );
-  return createArticleStatement.run(title, url, mp3Url, mp3Duration, mp3Length);
+  const result = createArticleStatement.run(title, url, mp3Url, mp3Duration, mp3Length);
+  const createdArticleId = result.lastInsertRowid;
+  return createdArticleId;
 }
 
-export function updateArticle(id, title, url, mp3Url) {
-  const updateArticleStatement = db.prepare(
-    "UPDATE articles SET title = ?, url = ?, mp3Url = ? WHERE id = ?"
-  );
-  return updateArticleStatement.run(title, url, mp3Url, id);
+export function updateArticleInDb(id, columnsToUpdate) {
+  const columnNames = Object.keys(columnsToUpdate);
+  const columnValues = Object.values(columnsToUpdate);
+
+  const updateStatement = db.prepare(`
+    UPDATE articles
+    SET ${columnNames.map((columnName) => `${columnName} = ?`).join(', ')}
+    WHERE id = ?
+  `);
+
+  const result = updateStatement.run([...columnValues, id]);
+
+  if (result.changes > 0) {
+    console.log(`Article with ID ${id} updated successfully.`);
+  } else {
+    console.log(`No article found with ID ${id}.`);
+  }
 }

@@ -1,16 +1,19 @@
-import { createArticleInDb } from "../src/utils/db.js";
+import { createArticleInDb, getArticleFromDb, updateArticleInDb } from "../src/utils/db.js";
 import { extractArticle } from "../src/utils/extract-article.js";
 import { getAudioBufferForText } from "../src/utils/azure-tts.js";
 import { getAudioDurationInSeconds } from "get-audio-duration";
 import md5 from "js-md5";
 import path from "node:path";
-import fs from "node:fs/promises";
+import fs from "node:fs";
 import { secsToMMSS } from "../src/utils/time.js";
 import "dotenv/config";
 
-export async function createArticle({url, title}) {
+export async function createArticle({articleId}) {
 
-  const articleContent = await extractArticle(url);
+  // TODO: read data from the database here
+  const articleData = getArticleFromDb(articleId);
+
+  const articleContent = await extractArticle(articleData.url);
   const articleAudio = await getAudioBufferForText(articleContent);
   const articleHash = md5(articleContent);
   const articlePath = path.join("static", "articles", `${articleHash}.mp3`);
@@ -19,14 +22,12 @@ export async function createArticle({url, title}) {
 
   const articlesFolderPath = path.join("static", "articles");
 
-  // Check articles folder exists. If it doesn't, create it.
-  try {
-    const articlesFolderExists = await fs.access(articlesFolderPath);
-  }  catch (err) {
-    await fs.mkdir(articlesFolderPath, {recursive: true});
+  const articlesFolderExists = fs.existsSync(articlesFolderPath);
+  if (!articlesFolderExists) {
+    await fs.promises.mkdir(articlesFolderPath, {recursive: true});
   }
 
-  await fs.writeFile(articlePath, articleAudio);
+  await fs.promises.writeFile(articlePath, articleAudio);
 
   console.log("Wrote the file to the path");
 
@@ -36,7 +37,7 @@ export async function createArticle({url, title}) {
 
   console.log({durationSecs, mp3Duration});
 
-  const mp3FileStats = await fs.stat(articlePath);
+  const mp3FileStats = await fs.promises.stat(articlePath);
 
   console.log({mp3FileStats});
 
@@ -44,9 +45,7 @@ export async function createArticle({url, title}) {
 
   console.log({mp3Length})
 
-  const articleInDb = createArticleInDb({
-    title,
-    url,
+  const articleInDb = updateArticleInDb(articleId, {
     mp3Url: `/static/articles/${articleHash}.mp3`,
     mp3Duration,
     mp3Length
