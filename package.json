@@ -18,6 +18,7 @@
     "astro": "^2.6.4",
     "better-sqlite3": "^8.4.0",
     "bullmq": "^3.15.8",
+    "cheerio": "^1.0.0-rc.12",
     "dotenv": "^16.3.1",
     "fast-glob": "^3.2.12",
     "get-audio-duration": "^4.0.0",
