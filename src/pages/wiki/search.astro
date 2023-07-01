@@ -1,0 +1,61 @@
+---
+import Dump from "../../components/Dump.astro";
+import {getWikiSearchResults} from "../../utils/wikipedia";
+
+const searchQuery = Astro.url.searchParams.get('q');
+const searchResults = await getWikiSearchResults(searchQuery);
+---
+
+<form>
+  <label>Search query</label>
+  <input name="q" value={searchQuery} />
+  <button>Search</button>
+</form>
+
+<h2>Results</h2>
+<ul>
+  {searchResults.map(result => (
+  <li>
+    <a href={`/wiki/${result.pageid}/`}>{result.title}</a>
+    <button data-page-id={result.pageid}>Get links</button>
+  </li>
+  ))}
+</ul>
+
+<script>
+async function getPageLinks(event) {
+  event.preventDefault();
+  const button = event.target;
+  const {pageId} = button.dataset;
+
+  console.log("should get page links for", pageId);
+
+  const linksUrl = `/wiki/${pageId}`;
+
+  const result = await fetch(linksUrl);
+
+  const pageLinks = await result.json().then(data => data.links);
+
+  const linksContainer = document.createElement('ul');
+
+  pageLinks.forEach(pageLink => {
+    const listItemTag = document.createElement('li');
+    listItemTag.innerText = pageLink.title;
+    listItemTag.dataset.url = pageLink.url;
+
+    linksContainer.appendChild(listItemTag);
+  })
+
+  button.parentElement.appendChild(linksContainer);
+
+  return;
+}
+
+document.addEventListener('click', function(event) {
+  if (event.target.matches('button[data-page-id]')) {
+    getPageLinks(event);
+  }
+
+});
+
+</script>

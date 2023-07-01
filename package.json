@@ -28,7 +28,8 @@
     "mp3-duration": "^1.1.0",
     "p-map": "^6.0.0",
     "pdf.js-extract": "^0.2.1",
-    "unzipper": "^0.10.14"
+    "unzipper": "^0.10.14",
+    "wikipedia": "^2.1.0"
   },
   "devDependencies": {
     "concurrently": "^8.2.0"
