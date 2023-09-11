@@ -1,11 +1,11 @@
 ---
-import {getArticles, createArticleInDb } from "../../utils/db"
-import {Queue} from "bullmq"
+import { getArticles, createArticleInDb } from "../../utils/db";
+import { Queue } from "bullmq";
 
 let statusMessage;
 
 if (Astro.request.method === "POST") {
-  const taskQueue = new Queue('taskQueue');
+  const taskQueue = new Queue("taskQueue");
   const formData = await Astro.request.formData();
   const { title, url } = Object.fromEntries(formData.entries());
 
@@ -14,10 +14,10 @@ if (Astro.request.method === "POST") {
   const createdArticleId = createArticleInDb({
     title,
     url,
-    });
+  });
 
-  taskQueue.add('getAudioForText', {articleId: createdArticleId});  
-  statusMessage = 'Added to queue!';
+  taskQueue.add("createArticle", { articleId: createdArticleId });
+  statusMessage = "Added to queue!";
 }
 
 const articles = getArticles();
