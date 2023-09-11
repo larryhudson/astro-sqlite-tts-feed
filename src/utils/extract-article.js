@@ -2,31 +2,37 @@ import { extract, addTransformations } from "@extractus/article-extractor";
 import { convert } from "html-to-text";
 import cheerio from "cheerio";
 
-
 export async function extractArticle(url) {
+  addTransformations({
+    patterns: [/([\w]+.)?wikipedia.org\/*/],
+    // */
+    pre: (document) => {
+      // do something with document
+      const selectorsToRemove = [
+        "figure",
+        "img",
+        "figcaption",
+        "sup.reference",
+        "sup.noprint",
+        "div.thumb",
+        "table.infobox",
+        "ol.references",
+        ".mw-editsection",
+      ];
 
-addTransformations({
-  patterns: [ /([\w]+.)?wikipedia.org\/*/],
-  // */
-  pre: (document) => {
-    // do something with document
-  const selectorsToRemove = [
-    "figure", "img", "figcaption", "sup.reference", "sup.noprint", "div.thumb", "table.infobox", "ol.references" 
-  ]
+      selectorsToRemove.forEach((selector) => {
+        document.querySelectorAll(selector).forEach((elem) => {
+          elem.parentNode.removeChild(elem);
+        });
+      });
 
-    selectorsToRemove.forEach(selector => {
-      document.querySelectorAll(selector).forEach(elem => {
-        elem.parentNode.removeChild(elem)
-      })
-    })
-
-    return document
-  },
-  post: (document) => {
-    // do something with document
-    return document
-  }
-});
+      return document;
+    },
+    post: (document) => {
+      // do something with document
+      return document;
+    },
+  });
 
   const article = await extract(url);
 
