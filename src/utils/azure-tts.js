@@ -45,6 +45,12 @@ async function getAudioBufferForChunk(text) {
     )}</voice></speak>`,
   });
 
+  if (!response.ok) {
+    throw new Error(
+      `Error fetching audio from Azure TTS: ${response.status} ${response.statusText}`
+    );
+  }
+
   const arrayBuffer = await response.arrayBuffer();
 
   return Buffer.from(arrayBuffer);
