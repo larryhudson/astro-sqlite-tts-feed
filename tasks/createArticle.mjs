@@ -1,4 +1,8 @@
-import { createArticleInDb, getArticleFromDb, updateArticleInDb } from "../src/utils/db.js";
+import {
+  createArticleInDb,
+  getArticleFromDb,
+  updateArticleInDb,
+} from "../src/utils/db.js";
 import { extractArticle } from "../src/utils/extract-article.js";
 import { getAudioBufferForText } from "../src/utils/azure-tts.js";
 import { getAudioDurationInSeconds } from "get-audio-duration";
@@ -8,8 +12,8 @@ import fs from "node:fs";
 import { secsToMMSS } from "../src/utils/time.js";
 import "dotenv/config";
 
-export async function createArticle({articleId}) {
-
+export async function createArticle({ articleId }) {
+  console.log("Should be creating an article now");
   // TODO: read data from the database here
   const articleData = getArticleFromDb(articleId);
 
@@ -24,7 +28,7 @@ export async function createArticle({articleId}) {
 
   const articlesFolderExists = fs.existsSync(articlesFolderPath);
   if (!articlesFolderExists) {
-    await fs.promises.mkdir(articlesFolderPath, {recursive: true});
+    await fs.promises.mkdir(articlesFolderPath, { recursive: true });
   }
 
   await fs.promises.writeFile(articlePath, articleAudio);
@@ -35,21 +39,21 @@ export async function createArticle({articleId}) {
 
   const mp3Duration = secsToMMSS(durationSecs);
 
-  console.log({durationSecs, mp3Duration});
+  console.log({ durationSecs, mp3Duration });
 
   const mp3FileStats = await fs.promises.stat(articlePath);
 
-  console.log({mp3FileStats});
+  console.log({ mp3FileStats });
 
   const mp3Length = mp3FileStats.size;
 
-  console.log({mp3Length})
+  console.log({ mp3Length });
 
   const articleInDb = updateArticleInDb(articleId, {
     mp3Url: `/static/articles/${articleHash}.mp3`,
     mp3Duration,
-    mp3Length
+    mp3Length,
   });
 
-return articleInDb;
+  return articleInDb;
 }
