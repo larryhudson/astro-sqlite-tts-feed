@@ -4,7 +4,7 @@ import path from "path";
 // will need to try to work out how to figure out the project root path
 // Eg: https://stackoverflow.com/questions/10265798/determine-project-root-from-a-running-node-js-application
 
-const dbFilePath = path.resolve('articles.db');
+const dbFilePath = path.resolve("articles.db");
 
 const db = new Database(dbFilePath, {
   verbose: console.log,
@@ -28,11 +28,23 @@ export function getArticleFromDb(id) {
   return article;
 }
 
-export function createArticleInDb({title, url, mp3Url, mp3Duration, mp3Length}) {
+export function createArticleInDb({
+  title,
+  url,
+  mp3Url,
+  mp3Duration,
+  mp3Length,
+}) {
   const createArticleStatement = db.prepare(
     "INSERT INTO articles (title, url, mp3Url, mp3Duration, mp3Length) VALUES (?, ?, ?, ?, ?)"
   );
-  const result = createArticleStatement.run(title, url, mp3Url, mp3Duration, mp3Length);
+  const result = createArticleStatement.run(
+    title,
+    url,
+    mp3Url,
+    mp3Duration,
+    mp3Length
+  );
   const createdArticleId = result.lastInsertRowid;
   return createdArticleId;
 }
@@ -43,7 +55,7 @@ export function updateArticleInDb(id, columnsToUpdate) {
 
   const updateStatement = db.prepare(`
     UPDATE articles
-    SET ${columnNames.map((columnName) => `${columnName} = ?`).join(', ')}
+    SET ${columnNames.map((columnName) => `${columnName} = ?`).join(", ")}
     WHERE id = ?
   `);
 

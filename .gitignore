@@ -29,5 +29,6 @@ static/articles
 test-epub
 test-pdf
 
+tmp*
 
 

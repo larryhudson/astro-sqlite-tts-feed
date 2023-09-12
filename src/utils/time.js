@@ -3,3 +3,7 @@ export function secsToMMSS(secs) {
   const seconds = Math.floor(secs - minutes * 60);
   return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
 }
+
+export function secsToMs(secs) {
+  return secs * 1000;
+}

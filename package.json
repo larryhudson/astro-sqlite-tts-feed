@@ -26,6 +26,7 @@
     "html-to-text": "^9.0.5",
     "js-md5": "^0.7.3",
     "mp3-duration": "^1.1.0",
+    "node-id3": "^0.2.6",
     "p-map": "^6.0.0",
     "pdf.js-extract": "^0.2.1",
     "unzipper": "^0.10.14",

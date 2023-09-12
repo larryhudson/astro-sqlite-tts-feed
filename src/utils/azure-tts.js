@@ -1,6 +1,12 @@
 import { encode } from "html-entities";
 import pMap from "p-map";
 import { Buffer } from "buffer";
+import fs from "fs";
+import fsPromises from "fs/promises";
+import path from "path";
+import { secsToMs } from "../utils/time.js";
+import { getAudioDurationInSeconds } from "get-audio-duration";
+import md5 from "js-md5";
 
 function splitTextIntoChunksByLines(text, chunkLength) {
   const lines = text.split("\n");
@@ -60,11 +66,58 @@ export async function getAudioBufferForText(text) {
   console.log(text);
   const chunks = splitTextIntoChunksByLines(text, 3000);
 
-  const result = await pMap(chunks, getAudioBufferForChunk, { concurrency: 2 });
+  const audioBuffers = await pMap(chunks, getAudioBufferForChunk, {
+    concurrency: 2,
+  });
   // use p-map with concurrency of 2
-  const audioBuffers = await Promise.all(
-    chunks.map((chunk) => getAudioBufferForChunk(chunk))
+
+  const joinedBuffer = Buffer.concat(audioBuffers);
+
+  const textHash = md5(text);
+
+  // write the joined buffer to a temporary audio file
+
+  const tmpFolderPath = "./tmp-audio";
+
+  const tmpFolderExists = await fs.existsSync(tmpFolderPath);
+  if (!tmpFolderExists) {
+    await fsPromises.mkdir(tmpFolderPath, { recursive: true });
+  }
+
+  const tmpAudioPath = path.join(tmpFolderPath, `${textHash}.mp3`);
+
+  await fsPromises.writeFile(tmpAudioPath, joinedBuffer);
+
+  const durationSecs = await getAudioDurationInSeconds(tmpAudioPath);
+  const durationMs = secsToMs(durationSecs);
+
+  await fsPromises.rm(tmpAudioPath);
+
+  return {
+    audioBuffer: joinedBuffer,
+    durationMs,
+  };
+}
+
+export async function getAudioForChapters(chapters) {
+  const chaptersWithAudio = await pMap(
+    chapters,
+    async (chapter) => {
+      const chapterText = chapter.text;
+      const { audioBuffer, durationMs } = await getAudioBufferForText(
+        chapterText
+      );
+
+      return {
+        ...chapter,
+        audioBuffer,
+        durationMs,
+      };
+    },
+    {
+      concurrency: 1,
+    }
   );
 
-  return Buffer.concat(audioBuffers);
+  return chaptersWithAudio;
 }
