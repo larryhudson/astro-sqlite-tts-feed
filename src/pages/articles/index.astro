@@ -7,7 +7,9 @@ let statusMessage;
 if (Astro.request.method === "POST") {
   const taskQueue = new Queue("taskQueue");
   const formData = await Astro.request.formData();
-  const { title, url } = Object.fromEntries(formData.entries());
+  const { title, url, taskType } = Object.fromEntries(formData.entries());
+
+  // TODO: if the user doesn't enter a title, get it from the webpage / video automatically
 
   // TODO: instead of passing directly to bull task, should create new record in DB
   // then pass the DB ID to the bull task.
@@ -16,7 +18,18 @@ if (Astro.request.method === "POST") {
     url,
   });
 
-  taskQueue.add("createArticle", { articleId: createdArticleId });
+  const taskNameForType = {
+    "text-to-speech": "textToSpeech",
+    "yt-dlp": "ytDlp",
+  };
+
+  const taskName = taskNameForType[taskType];
+
+  if (!taskName) {
+    throw new Error(`Invalid type: ${taskType}`);
+  }
+
+  taskQueue.add(taskName, { articleId: createdArticleId });
   statusMessage = "Added to queue!";
 }
 
@@ -68,6 +81,13 @@ const articles = getArticles();
   <label>
     URL
     <input type="text" name="url" />
+  </label>
+  <label>
+    Type
+    <select name="taskType">
+      <option value="text-to-speech">Text to speech</option>
+      <option value="yt-dlp">yt-dlp</option>
+    </select>
   </label>
   <button type="submit">Add</button>
 </form>
