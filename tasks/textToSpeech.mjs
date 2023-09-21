@@ -13,7 +13,7 @@ import { secsToMMSS } from "../src/utils/time.js";
 import "dotenv/config";
 import NodeID3 from "node-id3";
 
-export async function createArticle({ articleId }) {
+export async function textToSpeech({ articleId }) {
   const articleData = getArticleFromDb(articleId);
 
   // TODO: instead of returning text here, return an array of chapters

@@ -1,9 +1,14 @@
 import { Worker } from "bullmq";
-import { createArticle } from "./tasks/createArticle.mjs";
+import { textToSpeech } from "./tasks/textToSpeech.mjs";
+import { ytDlp } from "./tasks/ytDlp.mjs";
 
 const worker = new Worker("taskQueue", async (job) => {
-  if (job.name === "createArticle") {
-    await createArticle(job.data);
+  if (job.name === "textToSpeech") {
+    await textToSpeech(job.data);
+  }
+
+  if (job.name === "ytDlp") {
+    await ytDlp(job.data);
   }
 });
 
