@@ -4,10 +4,11 @@
 SITE_NAME="astro-sqlite-tts-feed"
 DOMAIN_NAME="tts-feed.larryhudson.io"
 APP_PORT="3000"
+APP_DIR="/var/www/${SITE_NAME}"
 NGINX_CONF_FILE_PATH="/etc/nginx/sites-available/${DOMAIN_NAME}"
 
 # Create a new nginx configuration file for the site
-sudo tee ${NGINX_CONF_FILE_PATH}  <<EOF
+sudo tee ${NGINX_CONF_FILE_PATH} <<EOF
 server {
     listen 80;
     server_name ${DOMAIN_NAME};
@@ -19,6 +20,11 @@ server {
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host \$host;
         proxy_cache_bypass \$http_upgrade;
+    }
+
+    location /static/  {
+        alias ${APP_DIR}/static/;
+        autoindex off;
     }
 }
 EOF
