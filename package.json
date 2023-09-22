@@ -12,17 +12,17 @@
     "dev": "concurrently \"npm:dev-*\""
   },
   "dependencies": {
-    "@astrojs/node": "^5.2.0",
-    "@astrojs/rss": "^2.4.3",
-    "@extractus/article-extractor": "^7.2.16",
-    "astro": "^2.6.4",
-    "better-sqlite3": "^8.4.0",
-    "bullmq": "^3.15.8",
+    "@astrojs/node": "^6.0.1",
+    "@astrojs/rss": "^3.0.0",
+    "@extractus/article-extractor": "^8.0.2",
+    "astro": "^3.1.2",
+    "better-sqlite3": "^8.6.0",
+    "bullmq": "^4.11.4",
     "cheerio": "^1.0.0-rc.12",
     "dotenv": "^16.3.1",
-    "fast-glob": "^3.2.12",
-    "get-audio-duration": "^4.0.0",
-    "html-entities": "^2.3.6",
+    "fast-glob": "^3.3.1",
+    "get-audio-duration": "^4.0.1",
+    "html-entities": "^2.4.0",
     "html-to-text": "^9.0.5",
     "js-md5": "^0.7.3",
     "mp3-duration": "^1.1.0",
@@ -30,9 +30,9 @@
     "p-map": "^6.0.0",
     "pdf.js-extract": "^0.2.1",
     "unzipper": "^0.10.14",
-    "wikipedia": "^2.1.0"
+    "wikipedia": "^2.1.1"
   },
   "devDependencies": {
-    "concurrently": "^8.2.0"
+    "concurrently": "^8.2.1"
   }
 }

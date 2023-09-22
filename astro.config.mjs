@@ -9,4 +9,7 @@ export default defineConfig({
     mode: "standalone",
   }),
   site: "http://tts-feed.larryhudson.io",
+  server: {
+    port: 3000,
+  },
 });
