@@ -1,6 +1,18 @@
-import { getArticlesWithMp3Url } from "../utils/db";
+import { getArticlesWithMp3Url } from "@src/utils/db";
+import { addPasswordParamToUrl, checkPassword } from "@src/utils/auth";
 
 export async function all(context) {
+  const requestUrl = context.url;
+  const passwordParam = requestUrl.searchParams.get("password");
+
+  const isCorrectPassword = checkPassword(passwordParam);
+
+  if (!isCorrectPassword) {
+    return new Response("Forbidden", {
+      status: 403,
+    });
+  }
+
   const articles = getArticlesWithMp3Url();
   const podcast = {
     title: "TTS Feed",
@@ -57,9 +69,10 @@ export async function all(context) {
         <itunes:author>${podcast.author}</itunes:author>
         <title>${article.title}</title>
         <pubDate>${new Date(article.added_at).toUTCString()}</pubDate>
-        <enclosure url="${podcast.site}${
-          article.mp3Url
-        }" type="audio/mpeg" length="${article.mp3Length}" />
+        <enclosure url="${podcast.site}${addPasswordParamToUrl(
+          article.mp3Url,
+          passwordParam
+        )}" type="audio/mpeg" length="${article.mp3Length}" />
         <itunes:duration>${article.mp3Duration}</itunes:duration>
         <guid isPermaLink="false">${article.mp3Url}</guid>
         <itunes:explicit>no</itunes:explicit>

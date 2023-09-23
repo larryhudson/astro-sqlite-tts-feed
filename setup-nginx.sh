@@ -23,6 +23,10 @@ server {
     }
 
     location /static/  {
+        if (\$arg_password != "ENTER_PASSWORD_HERE")
+           return 403;
+        }
+
         alias ${APP_DIR}/static/;
         autoindex off;
     }

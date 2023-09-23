@@ -2,7 +2,7 @@
 import { getArticles, createArticleInDb } from "../../utils/db";
 import { Queue } from "bullmq";
 
-import { checkLoggedIn } from "@src/utils/auth";
+import { checkLoggedIn, addPasswordParamToUrl } from "@src/utils/auth";
 const isLoggedIn = checkLoggedIn(Astro);
 if (!isLoggedIn) {
   return Astro.redirect("/auth/login");
@@ -63,7 +63,10 @@ const articles = getArticles();
           <td>
             {article.mp3Url ? (
               <audio controls>
-                <source src={article.mp3Url} type="audio/mpeg" />
+                <source
+                  src={addPasswordParamToUrl(article.mp3Url)}
+                  type="audio/mpeg"
+                />
               </audio>
             ) : (
               <form method="POST" action={`/articles/${article.id}/audio`}>

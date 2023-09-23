@@ -28,3 +28,10 @@ export function setPasswordCookie(Astro, password) {
     httpOnly: true,
   });
 }
+
+export function addPasswordParamToUrl(url, password) {
+  const searchParams = new URLSearchParams();
+  searchParams.set("password", password || APP_PASSWORD);
+
+  return `${url}?${searchParams.toString()}`;
+}
