@@ -73,7 +73,6 @@ export async function ytDlp({ articleId }) {
 
   console.log({ absoluteOutputFilePath });
 
-  // TODO: download with yt-dlp. extract audio. spawn a child process to do this.
   await new Promise((resolve, reject) => {
     const child = spawn("yt-dlp", [
       "--extract-audio",
@@ -111,8 +110,6 @@ export async function ytDlp({ articleId }) {
   const mp3Length = mp3FileStats.size;
 
   console.log({ mp3Length });
-
-  // TODO: something going wrong with the actual output path
 
   const articleInDb = updateArticleInDb(articleId, {
     mp3Url: `/static/articles/${downloadFilename}`,

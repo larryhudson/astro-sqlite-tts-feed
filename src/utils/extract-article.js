@@ -78,8 +78,6 @@ export async function extractArticle(url) {
   const tmpHtmlPath = "./tmp-html.html";
   await fsPromises.writeFile(tmpHtmlPath, articleHtml);
 
-  // TODO: use cheerio to split articleHtml into chapters (at h2 level)
-
   const $ = cheerio.load(articleHtml);
 
   $("div").each((_, divTag) => {

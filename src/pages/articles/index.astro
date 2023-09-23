@@ -17,8 +17,6 @@ if (Astro.request.method === "POST") {
 
   // TODO: if the user doesn't enter a title, get it from the webpage / video automatically
 
-  // TODO: instead of passing directly to bull task, should create new record in DB
-  // then pass the DB ID to the bull task.
   const createdArticleId = createArticleInDb({
     title,
     url,

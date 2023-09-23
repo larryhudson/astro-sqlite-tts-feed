@@ -2,7 +2,10 @@ import wiki from "wikipedia";
 import cheerio from "cheerio";
 
 export async function getWikiSearchResults(searchQuery) {
-  const searchResult = await wiki.search(searchQuery, {suggestion: true, limit: 10});
+  const searchResult = await wiki.search(searchQuery, {
+    suggestion: true,
+    limit: 10,
+  });
 
   return searchResult.results;
 }
@@ -16,16 +19,17 @@ export async function getWikiPageLinks(pageId) {
 
   const $ = cheerio.load(content);
 
-  const links = $('a[href^="/wiki/"][title]').map((_, aTag) => {
-    const title = $(aTag).attr('title');
-    const url = $(aTag).attr('href');
+  const links = $('a[href^="/wiki/"][title]')
+    .map((_, aTag) => {
+      const title = $(aTag).attr("title");
+      const url = $(aTag).attr("href");
 
-    return {title, url}
-  }).get();
+      return { title, url };
+    })
+    .get();
 
   return links;
 }
-
 
 function getCostEstimate(numChars) {
   const AUD_PER_CHARACTER = 0.000024241;
@@ -35,7 +39,6 @@ function getCostEstimate(numChars) {
 }
 
 export async function getWikiPageSections(pageId) {
-
   const page = await wiki.page(pageId);
 
   const content = await page.html();
@@ -48,76 +51,90 @@ export async function getWikiPageSections(pageId) {
 
   const firstHeading = $(headingSelector).first();
 
-  const topLevelParentOfFirstHeading = $(firstHeading).parentsUntil('.toc').last().parent();
+  const topLevelParentOfFirstHeading = $(firstHeading)
+    .parentsUntil(".toc")
+    .last()
+    .parent();
 
   const firstTag = $(topLevelParentOfFirstHeading).prevAll().last();
 
-  const firstSectionContentTags = $(firstTag).nextUntil(topLevelParentOfFirstHeading);
+  const firstSectionContentTags = $(firstTag).nextUntil(
+    topLevelParentOfFirstHeading
+  );
 
   // TODO: make this a function
 
-  const firstSectionLinks = $(firstSectionContentTags).find('a[href^="/wiki/"][title]').map((_, aTag) => {
-      const title = $(aTag).attr('title');
-      const url = $(aTag).attr('href');
+  const firstSectionLinks = $(firstSectionContentTags)
+    .find('a[href^="/wiki/"][title]')
+    .map((_, aTag) => {
+      const title = $(aTag).attr("title");
+      const url = $(aTag).attr("href");
 
-      return {title, url}
-    }).get();
+      return { title, url };
+    })
+    .get();
 
-  const firstSectionTitle = 'Introduction';
+  const firstSectionTitle = "Introduction";
 
-    const firstSectionContent = $.html(firstSectionContentTags);
+  const firstSectionContent = $.html(firstSectionContentTags);
 
-    const firstSectionText = $.text(firstSectionContentTags);
-    const firstSectionTextLength = firstSectionText.length;
+  const firstSectionText = $.text(firstSectionContentTags);
+  const firstSectionTextLength = firstSectionText.length;
 
-    const firstSectionCostEstimateAud = getCostEstimate(firstSectionTextLength);
+  const firstSectionCostEstimateAud = getCostEstimate(firstSectionTextLength);
 
   const firstSection = {
-      title: firstSectionTitle,
-      content: firstSectionContent,
-      textLength: firstSectionTextLength,
-      costEstimateAud: firstSectionCostEstimateAud,
-      links: firstSectionLinks,
-    }
+    title: firstSectionTitle,
+    content: firstSectionContent,
+    textLength: firstSectionTextLength,
+    costEstimateAud: firstSectionCostEstimateAud,
+    links: firstSectionLinks,
+  };
 
-  const headingSections = $(headingSelector).map((_, headingTag) => {
+  const headingSections = $(headingSelector)
+    .map((_, headingTag) => {
+      const title = $(headingTag).text();
 
-    const title = $(headingTag).text();
+      const contentTags = $(headingTag).nextUntil(headingSelector).addBack();
 
-    const contentTags = $(headingTag).nextUntil(headingSelector).addBack();
+      const links = $(contentTags)
+        .find('a[href^="/wiki/"][title]')
+        .map((_, aTag) => {
+          const title = $(aTag).attr("title");
+          const url = $(aTag).attr("href");
 
-    const links = $(contentTags).find('a[href^="/wiki/"][title]').map((_, aTag) => {
-      const title = $(aTag).attr('title');
-      const url = $(aTag).attr('href');
+          return { title, url };
+        })
+        .get();
 
-      return {title, url}
-    }).get();
+      const sectionContent = $.html(contentTags);
 
-    const sectionContent = $.html(contentTags);
+      const sectionText = $.text(contentTags);
+      const textLength = sectionText.length;
 
-    const sectionText = $.text(contentTags);
-    const textLength = sectionText.length;
+      const costEstimateAud = getCostEstimate(textLength);
 
-    const costEstimateAud = getCostEstimate(textLength);
-
-    return {
-      title,
-      content: sectionContent,
-      textLength,
-      costEstimateAud,
-      links,
-    }
-
-  }).get();
+      return {
+        title,
+        content: sectionContent,
+        textLength,
+        costEstimateAud,
+        links,
+      };
+    })
+    .get();
 
   const allSections = [firstSection, ...headingSections];
 
-  const totalCostEstimateAud = allSections.reduce((previousSum, currentSection) => {
-    return previousSum + currentSection.costEstimateAud;
-  }, 0);
-  
+  const totalCostEstimateAud = allSections.reduce(
+    (previousSum, currentSection) => {
+      return previousSum + currentSection.costEstimateAud;
+    },
+    0
+  );
+
   return {
     pageSections: allSections,
-    totalCostEstimateAud
+    totalCostEstimateAud,
   };
 }
