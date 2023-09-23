@@ -1,0 +1,38 @@
+---
+import {
+  checkLoggedIn,
+  checkPassword,
+  setPasswordCookie,
+} from "@src/utils/auth";
+
+const isLoggedIn = checkLoggedIn(Astro);
+if (isLoggedIn) {
+  return Astro.redirect("/articles/");
+}
+
+let errorMessage;
+
+if (Astro.request.method === "POST") {
+  const formData = await Astro.request.formData();
+  const enteredPassword = formData.get("password");
+
+  const isCorrectPassword = checkPassword(enteredPassword);
+
+  if (isCorrectPassword) {
+    setPasswordCookie(Astro, enteredPassword);
+    return Astro.redirect("/articles/");
+  } else {
+    errorMessage = "Incorrect password";
+  }
+}
+---
+
+<h1>Login</h1>
+
+<form method="POST">
+  {errorMessage && <p>{errorMessage}</p>}
+  <label>Password</label>
+  <input type="password" name="password" />
+
+  <button type="submit">Log in</button>
+</form>

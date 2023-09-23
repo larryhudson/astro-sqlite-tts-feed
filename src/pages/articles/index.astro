@@ -2,6 +2,12 @@
 import { getArticles, createArticleInDb } from "../../utils/db";
 import { Queue } from "bullmq";
 
+import { checkLoggedIn } from "@src/utils/auth";
+const isLoggedIn = checkLoggedIn(Astro);
+if (!isLoggedIn) {
+  return Astro.redirect("/auth/login");
+}
+
 let statusMessage;
 
 if (Astro.request.method === "POST") {
