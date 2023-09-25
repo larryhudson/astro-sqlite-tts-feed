@@ -1,5 +1,9 @@
 ---
-import { getArticles, createArticleInDb } from "../../utils/db";
+import {
+  getArticles,
+  createArticleInDb,
+  deleteArticleFromDb,
+} from "../../utils/db";
 import { Queue } from "bullmq";
 
 import { checkLoggedIn, addPasswordParamToUrl } from "@src/utils/auth";
@@ -11,30 +15,45 @@ if (!isLoggedIn) {
 let statusMessage;
 
 if (Astro.request.method === "POST") {
-  const taskQueue = new Queue("taskQueue");
   const formData = await Astro.request.formData();
-  const { title, url, taskType } = Object.fromEntries(formData.entries());
+  const { title, url, taskType, action } = Object.fromEntries(
+    formData.entries(),
+  );
 
-  // TODO: if the user doesn't enter a title, get it from the webpage / video automatically
+  const isDeleting = action === "delete";
 
-  const createdArticleId = createArticleInDb({
-    title,
-    url,
-  });
+  if (isDeleting) {
+    const idToDelete = parseInt(formData.get("id"));
+    const deleted = deleteArticleFromDb(idToDelete);
 
-  const taskNameForType = {
-    "text-to-speech": "textToSpeech",
-    "yt-dlp": "ytDlp",
-  };
+    if (!deleted) {
+      throw new Error(`Couldn't delete article with id ${idToDelete}`);
+    }
 
-  const taskName = taskNameForType[taskType];
+    statusMessage = "Successfully deleted article!";
+  } else {
+    // TODO: if the user doesn't enter a title, get it from the webpage / video automatically
 
-  if (!taskName) {
-    throw new Error(`Invalid type: ${taskType}`);
+    const createdArticleId = createArticleInDb({
+      title,
+      url,
+    });
+
+    const taskNameForType = {
+      "text-to-speech": "textToSpeech",
+      "yt-dlp": "ytDlp",
+    };
+
+    const taskName = taskNameForType[taskType];
+
+    if (!taskName) {
+      throw new Error(`Invalid type: ${taskType}`);
+    }
+
+    const taskQueue = new Queue("taskQueue");
+    taskQueue.add(taskName, { articleId: createdArticleId });
+    statusMessage = "Added to queue!";
   }
-
-  taskQueue.add(taskName, { articleId: createdArticleId });
-  statusMessage = "Added to queue!";
 }
 
 const articles = getArticles();
@@ -50,6 +69,7 @@ const articles = getArticles();
       <th>Title</th>
       <th>URL</th>
       <th>Audio</th>
+      <th>Delete</th>
     </tr>
   </thead>
   <tbody>
@@ -69,6 +89,14 @@ const articles = getArticles();
             ) : (
               <p>No audio yet.</p>
             )}
+          </td>
+          <td>
+            <form method="POST">
+              <input type="hidden" name="id" value={article.id} />
+              <button name="action" value="delete">
+                Delete
+              </button>
+            </form>
           </td>
         </tr>
       ))
@@ -94,5 +122,5 @@ const articles = getArticles();
       <option value="yt-dlp">yt-dlp</option>
     </select>
   </label>
-  <button type="submit">Add</button>
+  <button type="submit" name="action" value="add">Add</button>
 </form>
