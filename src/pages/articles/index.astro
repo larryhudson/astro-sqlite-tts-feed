@@ -67,9 +67,7 @@ const articles = getArticles();
                 />
               </audio>
             ) : (
-              <form method="POST" action={`/articles/${article.id}/audio`}>
-                <button type="submit">Get audio</button>
-              </form>
+              <p>No audio yet.</p>
             )}
           </td>
         </tr>
