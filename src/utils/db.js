@@ -74,15 +74,17 @@ export function deleteArticleFromDb(id) {
   const article = lookupStatement.get(id);
 
   const mp3Url = article.mp3Url;
-  const mp3FilePath = mp3Url.slice(1);
+  if (mp3Url) {
+    const mp3FilePath = mp3Url.slice(1);
 
-  const mp3PathExists = fs.existsSync(mp3FilePath);
-  if (mp3PathExists) {
-    // delete the file
-    fs.unlinkSync(mp3FilePath);
-    console.log(`Deleted mp3 file at ${mp3FilePath}`);
-  } else {
-    console.log(`No mp3 file found at ${mp3FilePath}`);
+    const mp3PathExists = fs.existsSync(mp3FilePath);
+    if (mp3PathExists) {
+      // delete the file
+      fs.unlinkSync(mp3FilePath);
+      console.log(`Deleted mp3 file at ${mp3FilePath}`);
+    } else {
+      console.log(`No mp3 file found at ${mp3FilePath}`);
+    }
   }
 
   const deleteStatement = db.prepare("DELETE FROM articles WHERE id = ?");
