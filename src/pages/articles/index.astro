@@ -33,6 +33,10 @@ if (Astro.request.method === "POST") {
     statusMessage = "Successfully deleted article!";
   } else {
     // TODO: if the user doesn't enter a title, get it from the webpage / video automatically
+    const requiredFields = [url, taskType];
+    if (requiredFields.some((field) => !field)) {
+      throw new Error("Missing required fields");
+    }
 
     const createdArticleId = createArticleInDb({
       title,
@@ -115,7 +119,7 @@ const articles = getArticles();
   </label>
   <label>
     URL
-    <input type="text" name="url" />
+    <input type="text" name="url" required="" />
   </label>
   <label>
     Type
