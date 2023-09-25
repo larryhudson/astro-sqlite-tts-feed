@@ -1,33 +1,9 @@
 ---
-import { getArticles } from "../utils/db";
-
 import { checkLoggedIn } from "@src/utils/auth";
 const isLoggedIn = checkLoggedIn(Astro);
 if (!isLoggedIn) {
   return Astro.redirect("/auth/login");
+} else {
+  return Astro.redirect("/articles/");
 }
-
-const articles = getArticles();
 ---
-
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width" />
-    <meta name="generator" content={Astro.generator} />
-    <title>Astro</title>
-  </head>
-  <body>
-    <h1>Astro</h1>
-    <ul>
-      {
-        articles.map((article) => (
-          <li>
-            <a href={article.url}>{article.title}</a>
-          </li>
-        ))
-      }
-    </ul>
-  </body>
-</html>
