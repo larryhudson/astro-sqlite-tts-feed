@@ -11,42 +11,10 @@ import { secsToMMSS } from "../src/utils/time.js";
 import "dotenv/config";
 import NodeID3 from "node-id3";
 import { spawn } from "child_process";
-
-async function getDownloadFilename(webpageUrl) {
-  return new Promise((resolve, reject) => {
-    const dataChunks = [];
-
-    const ytDlpProcess = spawn("yt-dlp", [
-      "--get-filename",
-      webpageUrl,
-      "--restrict-filenames",
-    ]);
-
-    ytDlpProcess.stdout.on("data", (data) => {
-      dataChunks.push(data);
-    });
-
-    ytDlpProcess.stderr.on("data", (data) => {
-      console.error(`stderr: ${data}`);
-    });
-
-    ytDlpProcess.on("exit", (code) => {
-      if (code !== 0) {
-        reject(new Error(`yt-dlp exited with code ${code}`));
-        return;
-      }
-
-      const output = Buffer.concat(dataChunks).toString().trim();
-      const sanitizedFilename = processFilename(output);
-      resolve(sanitizedFilename);
-    });
-  });
-}
-
-function processFilename(filename) {
-  const baseName = path.basename(filename, path.extname(filename));
-  return `${baseName}.mp3`;
-}
+import {
+  getDownloadFilename,
+  downloadMp3FromWebpage,
+} from "../src/utils/yt-dlp.js";
 
 export async function ytDlp({ articleId }) {
   // TODO: it's not really an article. rename database?
@@ -73,28 +41,9 @@ export async function ytDlp({ articleId }) {
 
   console.log({ absoluteOutputFilePath });
 
-  await new Promise((resolve, reject) => {
-    const child = spawn("yt-dlp", [
-      "--extract-audio",
-      "--audio-format",
-      "mp3",
-      "-o",
-      absoluteOutputFilePath,
-      webpageUrl,
-    ]);
-
-    child.stdout.on("data", (data) => {
-      console.log(`stdout: ${data}`);
-    });
-
-    child.stderr.on("data", (data) => {
-      console.error(`stderr: ${data}`);
-    });
-
-    child.on("close", (code) => {
-      console.log(`child process exited with code ${code}`);
-      resolve(true);
-    });
+  await downloadMp3FromWebpage({
+    webpageUrl,
+    absoluteOutputFilePath,
   });
 
   const durationSecs = await getAudioDurationInSeconds(absoluteOutputFilePath);
