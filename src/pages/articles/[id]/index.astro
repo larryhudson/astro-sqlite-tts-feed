@@ -1,0 +1,68 @@
+---
+import { getArticleFromDb, updateArticleInDb } from "@src/utils/db";
+import Dump from "@src/components/Dump.astro";
+
+import { Queue } from "bullmq";
+
+const { id } = Astro.params;
+
+let statusMessage;
+
+if (Astro.request.method === "POST") {
+  const formData = await Astro.request.formData();
+  const action = formData.get("action");
+
+  if (action === "generate-audio") {
+    const taskQueue = new Queue("taskQueue", {
+      connection: { host: "127.0.0.1", port: 6379 },
+    });
+    taskQueue.add("convertTextToSpeech", { articleId: id });
+    statusMessage = "Added audio generation to queue";
+  }
+
+  if (action === "update") {
+    const title = formData.get("title");
+    const text_content = formData.get("content");
+
+    updateArticleInDb(id, { title, text_content });
+    statusMessage = "Article updated";
+  }
+}
+
+const article = getArticleFromDb(id);
+---
+
+<html>
+  <head>
+    <!-- set charset -->
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    {statusMessage && <p>Status message: {statusMessage}</p>}
+    <h1>{article.title}</h1>
+
+    <Dump data={article} />
+
+    <h2>Generate audio</h2>
+    <form method="POST">
+      <button name="action" value="generate-audio">Generate audio</button>
+    </form>
+    <h2>Edit text content</h2>
+
+    <form method="POST">
+      <label>
+        Title
+        <input name="title" type="text" value={article.title} />
+      </label>
+      <br />
+      <label>
+        Content
+        <br />
+        <textarea style="width: 100%" name="content" rows="30"
+          >{article.text_content}</textarea
+        >
+      </label>
+      <button type="submit" name="action" value="update">Save</button>
+    </form>
+  </body>
+</html>

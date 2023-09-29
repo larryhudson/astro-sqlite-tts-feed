@@ -11,6 +11,7 @@ const db = new Database(dbFilePath, {
   verbose: console.log,
 });
 db.pragma("journal_mode = WAL");
+db.pragma("encoding = 'UTF-8'");
 
 export function getArticles() {
   const articles = db.prepare("SELECT * FROM articles").all();

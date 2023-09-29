@@ -24,8 +24,9 @@ async function initialise() {
       mp3Duration TEXT NULL,
       mp3Length INTEGER NULL,
       status TEXT NULL,
-      type TEXT NULL
-    )`
+      type TEXT NULL,
+      text_content TEXT NULL,
+    )`,
   );
   createArticlesTable.run();
 }
@@ -42,7 +43,7 @@ async function setMp3Length() {
     const mp3Length = fs.statSync(mp3Path).size;
     // update the article with the mp3 file size
     const updateArticle = db.prepare(
-      `UPDATE articles SET mp3Length = ? WHERE id = ?`
+      `UPDATE articles SET mp3Length = ? WHERE id = ?`,
     );
     updateArticle.run(mp3Length, article.id);
   });

@@ -3,6 +3,7 @@ import { convert } from "html-to-text";
 import cheerio from "cheerio";
 import fsPromises from "fs/promises";
 import fs from "fs";
+import { parse as markedParse } from "marked";
 
 function convertHtmlToText(html) {
   const text = convert(html, {
@@ -73,6 +74,7 @@ export async function extractArticle(url) {
   const article = await extract(url);
 
   const articleTitle = article.title;
+  console.log({ articleTitle });
   const articleHtml = article.content;
 
   const tmpHtmlPath = "./tmp-html.html";
@@ -96,15 +98,13 @@ export async function extractArticle(url) {
 
   if (!firstTagIsHeading) {
     $("body").prepend(
-      `<${chapterHeadingSelector}>${articleTitle}</${chapterHeadingSelector}>`
+      `<${chapterHeadingSelector}>${articleTitle}</${chapterHeadingSelector}>`,
     );
   }
 
   const chapters = $(chapterHeadingSelector)
     .map((headingIndex, headingTag) => {
-      const contentTags = $(headingTag)
-        .nextUntil(chapterHeadingSelector)
-        .addBack();
+      const contentTags = $(headingTag).nextUntil(chapterHeadingSelector);
 
       const contentHtml = $.html(contentTags).trim();
 
@@ -124,5 +124,35 @@ export async function extractArticle(url) {
     .get();
 
   console.log(chapters);
+  return chapters;
+}
+
+export function getChaptersFromMarkdownContent(markdownContent) {
+  // convert markdown to html
+  const html = markedParse(markdownContent);
+
+  const $ = cheerio.load(html);
+
+  const chapters = $("h2")
+    .map((headingIndex, headingTag) => {
+      const contentTags = $(headingTag).nextUntil("h2").addBack();
+
+      const contentHtml = $.html(contentTags).trim();
+
+      const tmpChapterPath = `./tmp-html-chapter-${headingIndex}.html`;
+
+      fs.writeFileSync(tmpChapterPath, contentHtml);
+
+      const chapterTitle = $(headingTag).text().trim();
+
+      const chapterText = convertHtmlToText(contentHtml);
+
+      return {
+        title: chapterTitle,
+        text: chapterText,
+      };
+    })
+    .get();
+
   return chapters;
 }
