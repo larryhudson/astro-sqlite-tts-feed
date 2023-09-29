@@ -25,7 +25,7 @@ async function initialise() {
       mp3Length INTEGER NULL,
       status TEXT NULL,
       type TEXT NULL,
-      text_content TEXT NULL,
+      text_content TEXT NULL
     )`,
   );
   createArticlesTable.run();
