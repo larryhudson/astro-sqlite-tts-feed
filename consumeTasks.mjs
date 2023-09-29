@@ -1,12 +1,17 @@
 import { Worker } from "bullmq";
-import { textToSpeech } from "./tasks/textToSpeech.mjs";
+import { extractTextFromUrl } from "./tasks/extractTextFromUrl.mjs";
+import { convertTextToSpeech } from "./tasks/convertTextToSpeech.mjs";
 import { ytDlp } from "./tasks/ytDlp.mjs";
 
 const worker = new Worker(
   "taskQueue",
   async (job) => {
-    if (job.name === "textToSpeech") {
-      await textToSpeech(job.data);
+    if (job.name === "extractTextFromUrl") {
+      await extractTextFromUrl(job.data);
+    }
+
+    if (job.name === "convertTextToSpeech") {
+      await convertTextToSpeech(job.data);
     }
 
     if (job.name === "ytDlp") {

@@ -25,6 +25,7 @@
     "html-entities": "^2.4.0",
     "html-to-text": "^9.0.5",
     "js-md5": "^0.8.0",
+    "marked": "^9.0.3",
     "mp3-duration": "^1.1.0",
     "node-id3": "^0.2.6",
     "p-map": "^6.0.0",
