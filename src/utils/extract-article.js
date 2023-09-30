@@ -4,6 +4,7 @@ import cheerio from "cheerio";
 import fsPromises from "fs/promises";
 import fs from "fs";
 import { parse as markedParse } from "marked";
+import articleTitle from "article-title";
 
 function convertHtmlToText(html) {
   const text = convert(html, {
@@ -155,4 +156,13 @@ export function getChaptersFromMarkdownContent(markdownContent) {
     .get();
 
   return chapters;
+}
+
+export async function getArticleTitleFromUrl(url) {
+  const response = await fetch(url);
+  const html = await response.text();
+
+  const title = articleTitle(html);
+
+  return title;
 }

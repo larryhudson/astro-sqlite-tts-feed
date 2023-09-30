@@ -15,6 +15,7 @@
     "@astrojs/node": "^6.0.1",
     "@astrojs/rss": "^3.0.0",
     "@extractus/article-extractor": "^8.0.2",
+    "article-title": "^4.1.0",
     "astro": "^3.1.4",
     "better-sqlite3": "^8.6.0",
     "bullmq": "^4.11.4",
