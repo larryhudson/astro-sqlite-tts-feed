@@ -24,7 +24,11 @@ async function getTitleFromUrl(url, taskType) {
 
   if (taskType === "yt-dlp") {
     const metadata = await getContentMetadata(url);
-    return metadata.title;
+    if (metadata.uploader) {
+      return `${metadata.title} - ${metadata.uploader}`;
+    } else {
+      return metadata.title;
+    }
   }
 }
 
