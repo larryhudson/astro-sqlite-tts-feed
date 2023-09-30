@@ -32,6 +32,58 @@ export async function getDownloadFilename(webpageUrl) {
   });
 }
 
+export async function getContentMetadata(webpageUrl) {
+  return new Promise((resolve, reject) => {
+    const dataChunks = [];
+
+    const ytDlpProcess = spawn("yt-dlp", [webpageUrl, "--dump-single-json"]);
+
+    ytDlpProcess.stdout.on("data", (data) => {
+      dataChunks.push(data);
+    });
+
+    ytDlpProcess.stderr.on("data", (data) => {
+      console.error(`stderr: ${data}`);
+    });
+
+    ytDlpProcess.on("exit", (code) => {
+      if (code !== 0) {
+        reject(new Error(`yt-dlp exited with code ${code}`));
+        return;
+      }
+
+      const output = Buffer.concat(dataChunks).toString().trim();
+      const dataObj = JSON.parse(output);
+      resolve(dataObj);
+    });
+  });
+}
+
+export async function checkIfUrlIsSupported(webpageUrl) {
+  return new Promise((resolve, reject) => {
+    const dataChunks = [];
+
+    const ytDlpProcess = spawn("yt-dlp", [webpageUrl, "--dump-single-json"]);
+
+    ytDlpProcess.stdout.on("data", (data) => {
+      dataChunks.push(data);
+    });
+
+    ytDlpProcess.stderr.on("data", (data) => {
+      console.error(`stderr: ${data}`);
+      resolve(false);
+    });
+
+    ytDlpProcess.on("exit", (code) => {
+      if (code !== 0) {
+        resolve(false);
+      }
+
+      resolve(true);
+    });
+  });
+}
+
 function processFilename(filename) {
   const baseName = path.basename(filename, path.extname(filename));
   return `${baseName}.mp3`;

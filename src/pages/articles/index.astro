@@ -6,6 +6,8 @@ import {
 } from "../../utils/db";
 import { Queue } from "bullmq";
 import Layout from "@src/components/Layout.astro";
+import { getArticleTitleFromUrl } from "@src/utils/extract-article";
+import { getContentMetadata, checkIfUrlIsSupported } from "@src/utils/yt-dlp";
 
 import { checkLoggedIn, addPasswordParamToUrl } from "@src/utils/auth";
 const isLoggedIn = checkLoggedIn(Astro);
@@ -15,11 +17,39 @@ if (!isLoggedIn) {
 
 let statusMessage;
 
+async function getTitleFromUrl(url, taskType) {
+  if (taskType === "text-to-speech") {
+    return getArticleTitleFromUrl(url);
+  }
+
+  if (taskType === "yt-dlp") {
+    const metadata = await getContentMetadata(url);
+    return metadata.title;
+  }
+}
+
+async function inferTaskTypeFromUrl(url) {
+  const isSupportedByYtDlp = await checkIfUrlIsSupported(url);
+  if (isSupportedByYtDlp) {
+    console.log("URL is supported by yt-dlp");
+    return "yt-dlp";
+  } else {
+    console.log("URL is not supported, so using text-to-speech");
+    return "text-to-speech";
+  }
+}
+
 if (Astro.request.method === "POST") {
   const formData = await Astro.request.formData();
-  const { title, url, taskType, action } = Object.fromEntries(
-    formData.entries(),
-  );
+  const { url, action } = Object.fromEntries(formData.entries());
+
+  const suppliedTaskType = formData.get("taskType");
+  const taskType =
+    suppliedTaskType === "auto"
+      ? await inferTaskTypeFromUrl(url)
+      : suppliedTaskType;
+  const suppliedTitle = formData.get("title");
+  const title = suppliedTitle || (await getTitleFromUrl(url, taskType));
 
   const shouldGenerateAudio = formData.get(
     "generate-audio-after-extracting-content",
@@ -135,6 +165,7 @@ const articles = getArticles();
     <label>
       Type
       <select name="taskType">
+        <option value="auto">Auto (detect)</option>
         <option value="text-to-speech">Text to speech</option>
         <option value="yt-dlp">yt-dlp</option>
       </select>
