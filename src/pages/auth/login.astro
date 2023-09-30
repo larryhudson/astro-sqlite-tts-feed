@@ -4,6 +4,7 @@ import {
   checkPassword,
   setPasswordCookie,
 } from "@src/utils/auth";
+import Layout from "@src/components/Layout.astro";
 
 const isLoggedIn = checkLoggedIn(Astro);
 if (isLoggedIn) {
@@ -27,12 +28,14 @@ if (Astro.request.method === "POST") {
 }
 ---
 
-<h1>Login</h1>
+<Layout>
+  <h1>Login</h1>
 
-<form method="POST">
-  {errorMessage && <p>{errorMessage}</p>}
-  <label>Password</label>
-  <input type="password" name="password" />
+  <form method="POST">
+    {errorMessage && <p>{errorMessage}</p>}
+    <label>Password</label>
+    <input type="password" name="password" />
 
-  <button type="submit">Log in</button>
-</form>
+    <button type="submit">Log in</button>
+  </form>
+</Layout>

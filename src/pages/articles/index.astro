@@ -5,6 +5,7 @@ import {
   deleteArticleFromDb,
 } from "../../utils/db";
 import { Queue } from "bullmq";
+import Layout from "@src/components/Layout.astro";
 
 import { checkLoggedIn, addPasswordParamToUrl } from "@src/utils/auth";
 const isLoggedIn = checkLoggedIn(Astro);
@@ -72,85 +73,80 @@ if (Astro.request.method === "POST") {
 const articles = getArticles();
 ---
 
-<html>
-  <head>
-    <meta charset="utf-8" />
-  </head>
-  <body>
-    <h1>Articles</h1>
+<Layout>
+  <h1>Articles</h1>
 
-    {statusMessage && <p>Status message: {statusMessage}</p>}
+  {statusMessage && <p>Status message: {statusMessage}</p>}
 
-    <table>
-      <thead>
-        <tr>
-          <th>Title</th>
-          <th>URL</th>
-          <th>Audio</th>
-          <th>Delete</th>
-        </tr>
-      </thead>
-      <tbody>
-        {
-          articles.map((article) => (
-            <tr>
-              <td>
-                <a href={`/articles/${article.id}/`}>{article.title}</a>
-              </td>
-              <td>{article.url}</td>
-              <td>
-                {article.mp3Url ? (
-                  <audio controls>
-                    <source
-                      src={addPasswordParamToUrl(article.mp3Url)}
-                      type="audio/mpeg"
-                    />
-                  </audio>
-                ) : (
-                  <p>No audio yet.</p>
-                )}
-              </td>
-              <td>
-                <form method="POST">
-                  <input type="hidden" name="id" value={article.id} />
-                  <button name="action" value="delete">
-                    Delete
-                  </button>
-                </form>
-              </td>
-            </tr>
-          ))
-        }
-      </tbody>
-    </table>
+  <table>
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>URL</th>
+        <th>Audio</th>
+        <th>Delete</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        articles.map((article) => (
+          <tr>
+            <td>
+              <a href={`/articles/${article.id}/`}>{article.title}</a>
+            </td>
+            <td>{article.url}</td>
+            <td>
+              {article.mp3Url ? (
+                <audio controls>
+                  <source
+                    src={addPasswordParamToUrl(article.mp3Url)}
+                    type="audio/mpeg"
+                  />
+                </audio>
+              ) : (
+                <p>No audio yet.</p>
+              )}
+            </td>
+            <td>
+              <form method="POST">
+                <input type="hidden" name="id" value={article.id} />
+                <button name="action" value="delete">
+                  Delete
+                </button>
+              </form>
+            </td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
 
-    <h2>Add new</h2>
+  <h2>Add new</h2>
 
-    <form method="POST">
-      <label>
-        Title
-        <input type="text" name="title" />
-      </label>
-      <label>
-        URL
-        <input type="text" name="url" required="" />
-      </label>
-      <label>
-        Type
-        <select name="taskType">
-          <option value="text-to-speech">Text to speech</option>
-          <option value="yt-dlp">yt-dlp</option>
-        </select>
-      </label>
-      <label>
-        <input
-          type="checkbox"
-          name="generate-audio-after-extracting-content"
-          checked=""
-        />
-         Generate audio after extracting content
-      </label>
-      <button type="submit" name="action" value="add">Add</button>
-    </form>
-  </body>
-</html>
+  <form method="POST">
+    <label>
+      Title
+      <input type="text" name="title" />
+    </label>
+    <label>
+      URL
+      <input type="text" name="url" required="" />
+    </label>
+    <label>
+      Type
+      <select name="taskType">
+        <option value="text-to-speech">Text to speech</option>
+        <option value="yt-dlp">yt-dlp</option>
+      </select>
+    </label>
+    <label>
+      <input
+        type="checkbox"
+        name="generate-audio-after-extracting-content"
+        checked=""
+      />
+       Generate audio after extracting content
+    </label>
+    <button type="submit" name="action" value="add">Add</button>
+  </form>
+</Layout>
