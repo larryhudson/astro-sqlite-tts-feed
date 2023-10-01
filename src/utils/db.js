@@ -98,3 +98,79 @@ export function deleteArticleFromDb(id) {
     throw new Error(`No article found with ID ${id}.`);
   }
 }
+
+export function getExtractionRulesFromDb() {
+  const extractionRules = db.prepare("SELECT * FROM extraction_rules").all();
+  return extractionRules;
+}
+
+export function getExtractionRuleFromDb(id) {
+  const rule = db
+    .prepare("SELECT * FROM extraction_rules WHERE id = ?")
+    .get(id);
+  return rule;
+}
+
+export function getExtractionRulesForDomain(domain) {
+  // TODO: this is a bit messy.
+  const query =
+    domain === null
+      ? "SELECT * FROM extraction_rules WHERE is_active = 1 AND (domain IS ? OR domain = '')"
+      : "SELECT * FROM extraction_rules WHERE is_active = 1 AND domain = ?";
+  const extractionRules = db.prepare(query).all(domain);
+  return extractionRules;
+}
+
+export function createExtractionRule({
+  domain,
+  is_active,
+  title,
+  rule_type,
+  content,
+}) {
+  const createRuleStatement = db.prepare(
+    "INSERT INTO extraction_rules (domain, is_active, title, rule_type, content) VALUES (?, ?, ?, ?, ?)",
+  );
+  const result = createRuleStatement.run(
+    domain,
+    is_active,
+    title,
+    rule_type,
+    content,
+  );
+  const createdRuleId = result.lastInsertRowid;
+  return createdRuleId;
+}
+
+export function deleteExtractionRule(id) {
+  const deleteStatement = db.prepare(
+    "DELETE FROM extraction_rules WHERE id = ?",
+  );
+  const result = deleteStatement.run(id);
+  if (result.changes > 0) {
+    console.log(`Extraction rule with ID ${id} deleted successfully.`);
+    return true;
+  } else {
+    console.log(`No extraction rule found with ID ${id}.`);
+    throw new Error(`No extraction rule found with ID ${id}.`);
+  }
+}
+
+export function updateExtractionRuleInDb(id, columnsToUpdate) {
+  const columnNames = Object.keys(columnsToUpdate);
+  const columnValues = Object.values(columnsToUpdate);
+
+  const updateStatement = db.prepare(`
+    UPDATE extraction_rules
+    SET ${columnNames.map((columnName) => `${columnName} = ?`).join(", ")}
+    WHERE id = ?
+  `);
+
+  const result = updateStatement.run([...columnValues, id]);
+
+  if (result.changes > 0) {
+    console.log(`Extraction rule with ID ${id} updated successfully.`);
+  } else {
+    console.log(`No extraction rule found with ID ${id}.`);
+  }
+}

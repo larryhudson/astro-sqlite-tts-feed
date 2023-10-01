@@ -1,0 +1,73 @@
+---
+import {
+  getExtractionRuleFromDb,
+  updateExtractionRuleInDb,
+} from "@src/utils/db";
+import Layout from "@src/components/Layout.astro";
+
+const { id } = Astro.params;
+
+let statusMessage;
+
+if (Astro.request.method === "POST") {
+  const formData = await Astro.request.formData();
+  const action = formData.get("action");
+
+  if (action === "update") {
+    const title = formData.get("title");
+    const content = formData.get("content");
+    const is_active = formData.get("is_active") === "1" ? 1 : 0;
+    const domain = formData.get("domain");
+    const rule_type = formData.get("rule_type");
+
+    updateExtractionRuleInDb(id, {
+      title,
+      content,
+      is_active,
+      domain,
+      rule_type,
+    });
+    statusMessage = "Extraction rule updated";
+  }
+}
+
+const extractionRule = getExtractionRuleFromDb(id);
+---
+
+<Layout>
+  <h1>Editing extraction rule</h1>
+
+  {statusMessage && <p>Status message: {statusMessage}</p>}
+
+  <form method="POST">
+    <label>
+      <input
+        type="checkbox"
+        name="is_active"
+        value="1"
+        checked={extractionRule.is_active === 1}
+      />
+       Active
+    </label>
+    <br />
+    <label>
+      Domain (leave blank for global)
+      <input type="text" name="domain" value={extractionRule.domain} />
+    </label>
+    <label>
+      Title
+      <input type="text" name="title" value={extractionRule.title} />
+    </label>
+    <label>
+      Rule type
+      <select name="rule_type">
+        <option value="delete_selector">Delete selector</option>
+      </select>
+    </label>
+    <label>
+      Content
+      <input type="text" name="content" value={extractionRule.content} />
+    </label>
+    <button type="submit" name="action" value="update">Update</button>
+  </form>
+</Layout>

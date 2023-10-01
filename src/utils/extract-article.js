@@ -6,6 +6,8 @@ import fs from "fs";
 import { parse as markedParse } from "marked";
 import articleTitle from "article-title";
 
+import { getExtractionRulesForDomain } from "./db.js";
+
 function convertHtmlToText(html) {
   const text = convert(html, {
     wordwrap: 0,
@@ -41,35 +43,39 @@ function convertHtmlToText(html) {
 }
 
 export async function extractArticle(url) {
-  addTransformations({
-    patterns: [/([\w]+.)?wikipedia.org\/*/],
-    // */
-    pre: (document) => {
-      // do something with document
-      const selectorsToRemove = [
-        "figure",
-        "img",
-        "figcaption",
-        "sup.reference",
-        "sup.noprint",
-        "div.thumb",
-        "table.infobox",
-        "ol.references",
-        ".mw-editsection",
-      ];
+  const domain = new URL(url).hostname;
 
-      selectorsToRemove.forEach((selector) => {
-        document.querySelectorAll(selector).forEach((elem) => {
-          elem.parentNode.removeChild(elem);
-        });
+  const globalRules = getExtractionRulesForDomain(null);
+  const globalSelectorsToRemove = globalRules
+    .filter((rule) => rule.rule_type === "delete_selector")
+    .map((rule) => rule.content);
+  const domainRules = getExtractionRulesForDomain(domain);
+  const domainSelectorsToRemove = domainRules
+    .filter((rule) => rule.rule_type === "delete_selector")
+    .map((rule) => rule.content);
+
+  console.log({ globalSelectorsToRemove, domainSelectorsToRemove });
+
+  function removeSelectors(document, selectors) {
+    selectors.forEach((selector) => {
+      document.querySelectorAll(selector).forEach((elem) => {
+        elem.parentNode.removeChild(elem);
       });
+    });
 
-      return document;
-    },
-    post: (document) => {
-      // do something with document
-      return document;
-    },
+    return document;
+  }
+
+  addTransformations({
+    patterns: [/./],
+    pre: (document) => removeSelectors(document, globalSelectorsToRemove),
+  });
+
+  const domainRegex = new RegExp(`([\\w]+.)?${domain.replace(/\./g, "\\.")}/?`);
+
+  addTransformations({
+    patterns: [domainRegex],
+    pre: (document) => removeSelectors(document, domainSelectorsToRemove),
   });
 
   const article = await extract(url);
