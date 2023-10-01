@@ -6,6 +6,8 @@ import {
 } from "../../utils/db";
 import { Queue } from "bullmq";
 import Layout from "@src/components/Layout.astro";
+import NewArticleForm from "@src/components/NewArticleForm.astro";
+
 import { getArticleTitleFromUrl } from "@src/utils/extract-article";
 import { getContentMetadata, checkIfUrlIsSupported } from "@src/utils/yt-dlp";
 
@@ -104,7 +106,10 @@ if (Astro.request.method === "POST") {
   }
 }
 
-const articles = getArticles();
+const pageNumStr = Astro.url.searchParams.get("page") || "1";
+const pageNum = parseInt(pageNumStr);
+
+const articles = getArticles({ pageNum });
 ---
 
 <Layout>
@@ -112,76 +117,64 @@ const articles = getArticles();
 
   {statusMessage && <p>Status message: {statusMessage}</p>}
 
-  <table>
-    <thead>
-      <tr>
-        <th>Title</th>
-        <th>URL</th>
-        <th>Audio</th>
-        <th>Delete</th>
-      </tr>
-    </thead>
-    <tbody>
-      {
-        articles.map((article) => (
-          <tr>
-            <td>
-              <a href={`/articles/${article.id}/`}>{article.title}</a>
-            </td>
-            <td>{article.url}</td>
-            <td>
-              {article.mp3Url ? (
-                <audio controls>
-                  <source
-                    src={addPasswordParamToUrl(article.mp3Url)}
-                    type="audio/mpeg"
-                  />
-                </audio>
-              ) : (
-                <p>No audio yet.</p>
-              )}
-            </td>
-            <td>
-              <form method="POST">
-                <input type="hidden" name="id" value={article.id} />
-                <button name="action" value="delete">
-                  Delete
-                </button>
-              </form>
-            </td>
-          </tr>
-        ))
-      }
-    </tbody>
-  </table>
-
   <h2>Add new</h2>
+  <NewArticleForm />
 
-  <form method="POST">
-    <label>
-      Title
-      <input type="text" name="title" />
-    </label>
-    <label>
-      URL
-      <input type="text" name="url" required="" />
-    </label>
-    <label>
-      Type
-      <select name="taskType">
-        <option value="auto">Auto (detect)</option>
-        <option value="text-to-speech">Text to speech</option>
-        <option value="yt-dlp">yt-dlp</option>
-      </select>
-    </label>
-    <label>
-      <input
-        type="checkbox"
-        name="generate-audio-after-extracting-content"
-        checked=""
-      />
-       Generate audio after extracting content
-    </label>
-    <button type="submit" name="action" value="add">Add</button>
+  <table-saw ratio="1/3" zero-padding>
+    <table>
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>URL</th>
+          <th>Audio</th>
+          <th>Delete</th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          articles.map((article) => (
+            <tr>
+              <td>
+                <a href={`/articles/${article.id}/`}>{article.title}</a>
+              </td>
+              <td>{article.url}</td>
+              <td class="audio-container">
+                {article.mp3Url ? (
+                  <audio controls>
+                    <source
+                      src={addPasswordParamToUrl(article.mp3Url)}
+                      type="audio/mpeg"
+                    />
+                  </audio>
+                ) : (
+                  <p>No audio yet.</p>
+                )}
+              </td>
+              <td>
+                <form method="POST">
+                  <input type="hidden" name="id" value={article.id} />
+                  <button name="action" value="delete">
+                    Delete
+                  </button>
+                </form>
+              </td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </table-saw>
+  <form method="GET">
+    <button name="page" value={pageNum + 1}>Next page</button>
   </form>
 </Layout>
+
+<style>
+  audio {
+    height: min-content;
+  }
+</style>
+
+<script>
+  import { Tablesaw } from "@zachleat/table-saw";
+</script>

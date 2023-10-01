@@ -1,0 +1,62 @@
+<form method="POST">
+  <div>
+    <label>
+      Title (optional)
+      <input type="text" name="title" />
+    </label>
+  </div>
+  <div>
+    <label>
+      URL
+      <input type="text" name="url" required="" />
+    </label>
+  </div>
+  <div>
+    <label>
+      Type
+      <select name="taskType">
+        <option value="auto">Auto (detect)</option>
+        <option value="text-to-speech">Text to speech</option>
+        <option value="yt-dlp">yt-dlp</option>
+      </select>
+    </label>
+  </div>
+  <div>
+    <label>
+      <input
+        type="checkbox"
+        name="generate-audio-after-extracting-content"
+        checked=""
+      />
+       Generate audio after extracting content
+    </label>
+  </div>
+
+  <div>
+    <button type="submit" name="action" value="add">Add</button>
+  </div>
+</form>
+
+<style>
+  input:not([type="checkbox"]),
+  select,
+  button {
+    width: 100%;
+    padding: 0.5rem;
+  }
+
+  label {
+    font-weight: bold;
+  }
+
+  form {
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+    width: 24rem;
+    max-width: 100%;
+  }
+
+  div {
+    padding: 0.5rem;
+  }
+</style>
