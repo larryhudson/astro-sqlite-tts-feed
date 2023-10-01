@@ -2,8 +2,7 @@
 import { getArticleFromDb, updateArticleInDb } from "@src/utils/db";
 import Dump from "@src/components/Dump.astro";
 import Layout from "@src/components/Layout.astro";
-
-import { Queue } from "bullmq";
+import taskQueue from "@src/utils/task-queue";
 
 const { id } = Astro.params;
 
@@ -14,11 +13,13 @@ if (Astro.request.method === "POST") {
   const action = formData.get("action");
 
   if (action === "generate-audio") {
-    const taskQueue = new Queue("taskQueue", {
-      connection: { host: "127.0.0.1", port: 6379 },
-    });
     taskQueue.add("convertTextToSpeech", { articleId: id });
     statusMessage = "Added audio generation to queue";
+  }
+
+  if (action === "refetch-content") {
+    taskQueue.add("extractTextFromUrl", { articleId: id });
+    statusMessage = "Added text extraction to queue";
   }
 
   if (action === "update") {
@@ -43,7 +44,13 @@ const article = getArticleFromDb(id);
   <form method="POST">
     <button name="action" value="generate-audio">Generate audio</button>
   </form>
-  <h2>Edit text content</h2>
+  <h2>Refetch text content</h2>
+
+  <form method="POST">
+    <button name="action" value="refetch-content">Refetch content</button>
+  </form>
+
+  <h2>Edit article text</h2>
 
   <form method="POST">
     <label>
