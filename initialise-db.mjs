@@ -28,7 +28,63 @@ async function initialise() {
       text_content TEXT NULL
     )`,
   );
+
+  console.log("Creating articles table");
   createArticlesTable.run();
+
+  const createExtractionRulesTable = db.prepare(
+    `CREATE TABLE IF NOT EXISTS extraction_rules (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      title TEXT NOT NULL,
+      domain TEXT NULL,
+      added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      rule_type TEXT NOT NULL DEFAULT 'delete_selector',
+      content TEXT NOT NULL
+      )`,
+  );
+
+  console.log("Creating extraction rules table");
+  createExtractionRulesTable.run();
+
+  const extractionRulesQuery = db.prepare(
+    `SELECT count(*) FROM extraction_rules`,
+  );
+
+  const extractionRulesCount = extractionRulesQuery.get();
+
+  if (extractionRulesCount["count(*)"] === 0) {
+    console.log("Adding default extraction rules");
+    addDefaultExtractionRules();
+  }
+}
+
+function addDefaultExtractionRules() {
+  const wikipediaSelectors = [
+    "figure",
+    "img",
+    "figcaption",
+    "sup.reference",
+    "sup.noprint",
+    "div.thumb",
+    "table.infobox",
+    "ol.references",
+    ".mw-editsection",
+  ];
+
+  const createRuleStatement = db.prepare(
+    "INSERT INTO extraction_rules (domain, is_active, title, rule_type, content) VALUES (?, ?, ?, ?, ?)",
+  );
+
+  for (const selector of wikipediaSelectors) {
+    createRuleStatement.run(
+      "en.wikipedia.org",
+      1,
+      `Remove ${selector} from Wikipedia`,
+      "delete_selector",
+      selector,
+    );
+  }
 }
 
 async function setMp3Length() {

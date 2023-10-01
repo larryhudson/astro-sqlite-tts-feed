@@ -1,0 +1,125 @@
+---
+import {
+  getExtractionRulesFromDb,
+  createExtractionRule,
+  deleteExtractionRule,
+} from "../../utils/db";
+import Layout from "@src/components/Layout.astro";
+
+import { checkLoggedIn, addPasswordParamToUrl } from "@src/utils/auth";
+const isLoggedIn = checkLoggedIn(Astro);
+if (!isLoggedIn) {
+  return Astro.redirect("/auth/login");
+}
+
+let statusMessage;
+
+if (Astro.request.method === "POST") {
+  const formData = await Astro.request.formData();
+  const { domain, is_active, title, rule_type, content, action } =
+    Object.fromEntries(formData.entries());
+
+  const isDeleting = action === "delete";
+
+  if (isDeleting) {
+    const idToDelete = parseInt(formData.get("id"));
+    const deleted = deleteExtractionRule(idToDelete);
+
+    if (!deleted) {
+      throw new Error(`Couldn't delete extraction rule with id ${idToDelete}`);
+    }
+
+    statusMessage = "Successfully deleted extraction rule!";
+  } else {
+    const requiredFields = [rule_type, content];
+    if (requiredFields.some((field) => !field)) {
+      throw new Error("Missing required fields");
+    }
+
+    console.log("Is active?");
+    console.log(is_active);
+
+    const createdRuleId = createExtractionRule({
+      domain,
+      is_active: is_active === "1" ? 1 : 0,
+      title,
+      rule_type,
+      content,
+    });
+
+    statusMessage = "Created extraction rule!";
+  }
+}
+
+const extractionRules = getExtractionRulesFromDb();
+---
+
+<Layout>
+  <h1>Extraction rules</h1>
+
+  {statusMessage && <p>Status message: {statusMessage}</p>}
+
+  <table>
+    <thead>
+      <tr>
+        <th>Is active?</th>
+        <th>Domain</th>
+        <th>Title</th>
+        <th>Rule type</th>
+        <th>Content</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        extractionRules.map((rule) => (
+          <tr>
+            <td>{rule.is_active === 1 ? "Yes" : "No"}</td>
+            <td>{rule.domain}</td>
+            <td>
+              <a href={`/extraction-rules/${rule.id}`}>{rule.title}</a>
+            </td>
+            <td>{rule.rule_type}</td>
+            <td>{rule.content}</td>
+            <td>
+              <form method="POST">
+                <input type="hidden" name="id" value={rule.id} />
+                <button name="action" value="delete">
+                  Delete
+                </button>
+              </form>
+            </td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+
+  <h2>Add new</h2>
+
+  <form method="POST">
+    <label>
+      <input type="checkbox" name="is_active" value="1" checked="" />
+       Active
+    </label>
+    <br />
+    <label>
+      Domain (leave blank for global)
+      <input type="text" name="domain" />
+    </label>
+    <label>
+      Title
+      <input type="text" name="title" />
+    </label>
+    <label>
+      Rule type
+      <select name="rule_type">
+        <option value="delete_selector">Delete selector</option>
+      </select>
+    </label>
+    <label>
+      Content
+      <input type="text" name="content" />
+    </label>
+    <button type="submit" name="action" value="add">Add</button>
+  </form>
+</Layout>
