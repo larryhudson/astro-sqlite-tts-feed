@@ -106,7 +106,7 @@ if (Astro.request.method === "POST") {
   }
 }
 
-const pageNumStr = Astro.url.searchParams.get("page") || "1";
+const pageNumStr = Astro.url.searchParams.get("page") || "0";
 const pageNum = parseInt(pageNumStr);
 
 const articles = getArticles({ pageNum });
