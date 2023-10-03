@@ -14,7 +14,7 @@ db.pragma("journal_mode = WAL");
 db.pragma("encoding = 'UTF-8'");
 
 export function getArticles({ pageNum }) {
-  const perPage = 5;
+  const perPage = 10;
   const offset = perPage * pageNum;
   const articles = db
     .prepare("SELECT * FROM articles ORDER BY id DESC LIMIT ? OFFSET ?")
