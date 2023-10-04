@@ -1,9 +1,6 @@
 import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
-// Having trouble with the path to the DB file.
-// will need to try to work out how to figure out the project root path
-// Eg: https://stackoverflow.com/questions/10265798/determine-project-root-from-a-running-node-js-application
 
 const dbFilePath = path.resolve("articles.db");
 
@@ -12,6 +9,70 @@ const db = new Database(dbFilePath, {
 });
 db.pragma("journal_mode = WAL");
 db.pragma("encoding = 'UTF-8'");
+
+export function createRecord(table, data) {
+  const keys = Object.keys(data);
+  const values = Object.values(data);
+  const placeholders = values.map(() => "?").join(", ");
+  const statement = db.prepare(
+    `INSERT INTO ${table} (${keys.join(", ")}) VALUES (${placeholders})`,
+  );
+  const result = statement.run(values);
+  return result.lastInsertRowid;
+}
+
+function parseId(id) {
+  const parsedId = parseInt(id);
+
+  if (Number.isNaN(parsedId)) {
+    throw new Error("Invalid ID. Please provide a valid integer ID.");
+  }
+
+  return parsedId;
+}
+
+export function getRecordById(table, id) {
+  const parsedId = parseId(id);
+
+  const statement = db.prepare(`SELECT * FROM ${table} WHERE id = ?`);
+
+  return statement.get(parsedId);
+}
+
+export function executeQuery({ table, condition, limit, offset, orderBy }) {
+  let whereClause = "";
+  let limitClause = "";
+  let offsetClause = "";
+  let orderByClause = "";
+  const values = [];
+
+  if (condition) {
+    const keys = Object.keys(condition);
+    const conditions = keys.map((key) => {
+      values.push(condition[key]);
+      return `${key} = ?`;
+    });
+
+    whereClause = `WHERE ${conditions.join(" AND ")}`;
+  }
+
+  if (limit) {
+    limitClause = `LIMIT ${limit}`;
+  }
+
+  if (offset) {
+    offsetClause = `OFFSET ${offset}`;
+  }
+
+  if (orderBy) {
+    orderByClause = `ORDER BY ${orderBy}`;
+  }
+
+  const query =
+    `SELECT * FROM ${table} ${whereClause} ${limitClause} ${offsetClause} ${orderByClause}`.trim();
+  const statement = db.prepare(query);
+  return statement.all(values);
+}
 
 export function getArticles({ pageNum }) {
   const perPage = 10;
@@ -30,7 +91,7 @@ export function getArticlesWithMp3Url() {
 }
 
 export function getArticleFromDb(id) {
-  const article = db.prepare("SELECT * FROM articles WHERE id = ?").get(id);
+  const article = getRecordById("articles", id);
   return article;
 }
 
@@ -41,42 +102,49 @@ export function createArticleInDb({
   mp3Duration,
   mp3Length,
 }) {
-  const createArticleStatement = db.prepare(
-    "INSERT INTO articles (title, url, mp3Url, mp3Duration, mp3Length) VALUES (?, ?, ?, ?, ?)",
-  );
-  const result = createArticleStatement.run(
+  const createdArticleId = createRecord("articles", {
     title,
     url,
     mp3Url,
     mp3Duration,
     mp3Length,
-  );
-  const createdArticleId = result.lastInsertRowid;
+  });
   return createdArticleId;
 }
 
+export function updateRecord(table, id, data) {
+  const parsedId = parseId(id);
+
+  const keys = Object.keys(data);
+  const values = Object.values(data);
+  const placeholders = keys.map((key) => `${key} = ?`).join(", ");
+  const statement = db.prepare(
+    `UPDATE ${table} SET ${placeholders} WHERE id = ?`,
+  );
+  const result = statement.run([...values, parsedId]);
+  return result.changes > 0;
+}
+
 export function updateArticleInDb(id, columnsToUpdate) {
-  const columnNames = Object.keys(columnsToUpdate);
-  const columnValues = Object.values(columnsToUpdate);
+  const updated = updateRecord("articles", id, columnsToUpdate);
 
-  const updateStatement = db.prepare(`
-    UPDATE articles
-    SET ${columnNames.map((columnName) => `${columnName} = ?`).join(", ")}
-    WHERE id = ?
-  `);
-
-  const result = updateStatement.run([...columnValues, id]);
-
-  if (result.changes > 0) {
+  if (updated) {
     console.log(`Article with ID ${id} updated successfully.`);
   } else {
     console.log(`No article found with ID ${id}.`);
   }
 }
 
+export function deleteRecordById(table, id) {
+  const parsedId = parseId(id);
+
+  const statement = db.prepare(`DELETE FROM ${table} WHERE id = ?`);
+  const result = statement.run(parsedId);
+  return result.changes > 0;
+}
+
 export function deleteArticleFromDb(id) {
-  const lookupStatement = db.prepare("SELECT * FROM articles WHERE id = ?");
-  const article = lookupStatement.get(id);
+  const article = getRecordById("articles", id);
 
   const mp3Url = article.mp3Url;
   if (mp3Url) {
@@ -92,9 +160,9 @@ export function deleteArticleFromDb(id) {
     }
   }
 
-  const deleteStatement = db.prepare("DELETE FROM articles WHERE id = ?");
-  const result = deleteStatement.run(id);
-  if (result.changes > 0) {
+  const deleted = deleteRecordById("articles", id);
+
+  if (deleted) {
     console.log(`Article with ID ${id} deleted successfully.`);
     return true;
   } else {
@@ -104,15 +172,12 @@ export function deleteArticleFromDb(id) {
 }
 
 export function getExtractionRulesFromDb() {
-  const extractionRules = db.prepare("SELECT * FROM extraction_rules").all();
+  const extractionRules = executeQuery({ table: "extraction_rules" });
   return extractionRules;
 }
 
 export function getExtractionRuleFromDb(id) {
-  const rule = db
-    .prepare("SELECT * FROM extraction_rules WHERE id = ?")
-    .get(id);
-  return rule;
+  return getRecordById("extraction_rules", id);
 }
 
 export function getExtractionRulesForDomain(domain) {
@@ -132,26 +197,19 @@ export function createExtractionRule({
   rule_type,
   content,
 }) {
-  const createRuleStatement = db.prepare(
-    "INSERT INTO extraction_rules (domain, is_active, title, rule_type, content) VALUES (?, ?, ?, ?, ?)",
-  );
-  const result = createRuleStatement.run(
+  const createdRuleId = createRecord("extraction_rules", {
     domain,
     is_active,
     title,
     rule_type,
     content,
-  );
-  const createdRuleId = result.lastInsertRowid;
+  });
   return createdRuleId;
 }
 
 export function deleteExtractionRule(id) {
-  const deleteStatement = db.prepare(
-    "DELETE FROM extraction_rules WHERE id = ?",
-  );
-  const result = deleteStatement.run(id);
-  if (result.changes > 0) {
+  const deleted = deleteRecordById("extraction_rules", id);
+  if (deleted) {
     console.log(`Extraction rule with ID ${id} deleted successfully.`);
     return true;
   } else {
@@ -161,18 +219,9 @@ export function deleteExtractionRule(id) {
 }
 
 export function updateExtractionRuleInDb(id, columnsToUpdate) {
-  const columnNames = Object.keys(columnsToUpdate);
-  const columnValues = Object.values(columnsToUpdate);
+  const updated = updateRecord("extraction_rules", id, columnsToUpdate);
 
-  const updateStatement = db.prepare(`
-    UPDATE extraction_rules
-    SET ${columnNames.map((columnName) => `${columnName} = ?`).join(", ")}
-    WHERE id = ?
-  `);
-
-  const result = updateStatement.run([...columnValues, id]);
-
-  if (result.changes > 0) {
+  if (updated) {
     console.log(`Extraction rule with ID ${id} updated successfully.`);
   } else {
     console.log(`No extraction rule found with ID ${id}.`);
