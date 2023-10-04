@@ -8,6 +8,19 @@ import { secsToMs } from "../utils/time.js";
 import { getAudioDurationInSeconds } from "get-audio-duration";
 import md5 from "js-md5";
 
+export function getCostEstimate(numChars) {
+  const AUD_PER_CHARACTER = 0.000024241;
+  const costUnrounded = numChars * AUD_PER_CHARACTER;
+  const costRounded = Math.round(costUnrounded * 100) / 100;
+  return costRounded;
+}
+
+export function getCostEstimateForText(text) {
+  if (!text) return 0;
+  const numChars = text.length;
+  return getCostEstimate(numChars);
+}
+
 function splitTextIntoChunksByLines(text, chunkLength) {
   const lines = text.split("\n");
   const chunks = [];
@@ -47,13 +60,13 @@ async function getAudioBufferForChunk(text) {
       "Ocp-Apim-Subscription-Key": AZURE_API_KEY,
     },
     body: `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="${ttsLang}"><voice name="${voiceName}">${encode(
-      text
+      text,
     )}</voice></speak>`,
   });
 
   if (!response.ok) {
     throw new Error(
-      `Error fetching audio from Azure TTS: ${response.status} ${response.statusText}`
+      `Error fetching audio from Azure TTS: ${response.status} ${response.statusText}`,
     );
   }
 
@@ -104,9 +117,8 @@ export async function getAudioForChapters(chapters) {
     chapters,
     async (chapter) => {
       const chapterText = chapter.text;
-      const { audioBuffer, durationMs } = await getAudioBufferForText(
-        chapterText
-      );
+      const { audioBuffer, durationMs } =
+        await getAudioBufferForText(chapterText);
 
       return {
         ...chapter,
@@ -116,7 +128,7 @@ export async function getAudioForChapters(chapters) {
     },
     {
       concurrency: 1,
-    }
+    },
   );
 
   return chaptersWithAudio;

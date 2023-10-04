@@ -1,5 +1,6 @@
 ---
 import { getArticleFromDb, updateArticleInDb } from "@src/utils/db";
+import { getCostEstimateForText } from "@src/utils/azure-tts";
 import Dump from "@src/components/Dump.astro";
 import Layout from "@src/components/Layout.astro";
 import taskQueue from "@src/utils/task-queue";
@@ -32,6 +33,7 @@ if (Astro.request.method === "POST") {
 }
 
 const article = getArticleFromDb(id);
+const costEstimate = getCostEstimateForText(article.text_content);
 ---
 
 <Layout>
@@ -41,6 +43,7 @@ const article = getArticleFromDb(id);
   <Dump data={article} />
 
   <h2>Generate audio</h2>
+  <p>Cost estimate: ${costEstimate}</p>
   <form method="POST">
     <button name="action" value="generate-audio">Generate audio</button>
   </form>
