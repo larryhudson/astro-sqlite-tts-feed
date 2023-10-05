@@ -227,3 +227,19 @@ export function updateExtractionRuleInDb(id, columnsToUpdate) {
     console.log(`No extraction rule found with ID ${id}.`);
   }
 }
+
+export function getRelatedLinksForArticle(articleId) {
+  const relatedLinks = executeQuery({
+    table: "related_links",
+    condition: { article_id: articleId },
+  });
+
+  return relatedLinks;
+}
+
+export function deleteRelatedLinksForArticle(articleId) {
+  const deleteStatement = `DELETE FROM related_links WHERE article_id = ?`;
+  deleteStatement.run(articleId);
+
+  console.log(`Deleted related links for article with ID ${articleId}`);
+}

@@ -1,12 +1,23 @@
-import { getArticleFromDb, updateArticleInDb } from "../src/utils/db.js";
+import {
+  getArticleFromDb,
+  updateArticleInDb,
+  createRecord,
+  deleteRelatedLinksForArticle,
+} from "../src/utils/db.js";
 import { extractArticle } from "../src/utils/extract-article.js";
 import "dotenv/config";
 import { Queue } from "bullmq";
 
-export async function extractTextFromUrl({ articleId, shouldGenerateAudio }) {
+export async function extractTextFromUrl({
+  articleId,
+  shouldGenerateAudio,
+  shouldAddRelatedLinks,
+}) {
   const articleData = getArticleFromDb(articleId);
 
-  const articleChapters = await extractArticle(articleData.url);
+  const { articleChapters, relatedLinks } = await extractArticle(
+    articleData.url,
+  );
 
   const markdownContent = articleChapters
     .map((c) => {
@@ -18,6 +29,22 @@ export async function extractTextFromUrl({ articleId, shouldGenerateAudio }) {
   const articleInDb = updateArticleInDb(articleId, {
     text_content: markdownContent,
   });
+
+  if (shouldAddRelatedLinks) {
+    // find existing related links
+    deleteRelatedLinksForArticle(articleId);
+    // add related links to db
+    for (const relatedLink of relatedLinks) {
+      const { title, url, contextQuote } = relatedLink;
+
+      createRecord("related_links", {
+        article_id: articleId,
+        title,
+        url,
+        context_quote: contextQuote,
+      });
+    }
+  }
 
   if (shouldGenerateAudio) {
     const taskQueue = new Queue("taskQueue", {
