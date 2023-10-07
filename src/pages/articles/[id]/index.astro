@@ -27,7 +27,7 @@ if (Astro.request.method === "POST") {
     const job = await taskQueue.add("extractTextFromUrl", {
       articleId: id,
       shouldGenerateAudio: false,
-      shouldAddRelatedLinks: false,
+      shouldAddRelatedLinks: true,
     });
     updateArticleInDb(id, { bullmq_job_id: job.id });
     statusMessage = "Added text extraction to queue";
