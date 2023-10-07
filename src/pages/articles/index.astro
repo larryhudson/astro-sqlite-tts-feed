@@ -2,6 +2,8 @@
 import { getArticles, deleteArticleFromDb } from "../../utils/db";
 import Layout from "@src/components/Layout.astro";
 import NewArticleForm from "@src/components/NewArticleForm.astro";
+import JobState from "@src/components/JobState.astro";
+
 import { createArticle } from "@src/utils/create-article";
 
 import { checkLoggedIn, addPasswordParamToUrl } from "@src/utils/auth";
@@ -87,7 +89,9 @@ const articles = getArticles({ pageNum });
                     />
                   </audio>
                 ) : (
-                  <p>No audio yet.</p>
+                  <p>
+                    No audio yet. Job state: <JobState id={article.id} />
+                  </p>
                 )}
               </td>
               <td>
