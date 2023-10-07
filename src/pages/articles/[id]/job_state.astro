@@ -1,6 +1,11 @@
 ---
+import { getRecordById } from "@src/utils/db";
+
 import JobState from "@src/components/JobState.astro";
+
 const { id } = Astro.params;
+const article = getRecordById("articles", id);
+const jobId = article.bullmq_job_id;
 ---
 
-<JobState {id} />
+<JobState {id} {jobId} />

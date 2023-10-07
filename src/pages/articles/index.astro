@@ -90,7 +90,8 @@ const articles = getArticles({ pageNum });
                   </audio>
                 ) : (
                   <p>
-                    No audio yet. Job state: <JobState id={article.id} />
+                    No audio yet. Job state:{" "}
+                    <JobState id={article.id} jobId={article.bullmq_job_id} />
                   </p>
                 )}
               </td>

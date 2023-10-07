@@ -1,13 +1,8 @@
 ---
-import { getRecordById } from "@src/utils/db";
 import taskQueue from "@src/utils/task-queue";
 
-const { id } = Astro.props;
-
-const article = getRecordById("articles", id);
-const bullmqJobId = article.bullmq_job_id;
-
-const jobState = await taskQueue.getJobState(bullmqJobId);
+const { id, jobId } = Astro.props;
+const jobState = await taskQueue.getJobState(jobId);
 
 const finishedJobStates = ["completed", "failed", "cancelled", "unknown"];
 const shouldPoll = !finishedJobStates.includes(jobState);

@@ -7,6 +7,7 @@ import {
 import { getCostEstimateForText } from "@src/utils/azure-tts";
 import Dump from "@src/components/Dump.astro";
 import Layout from "@src/components/Layout.astro";
+import JobState from "@src/components/JobState.astro";
 import taskQueue from "@src/utils/task-queue";
 
 const { id } = Astro.params;
@@ -43,6 +44,9 @@ if (Astro.request.method === "POST") {
 }
 
 const article = getArticleFromDb(id);
+
+const bullmqJobId = article.bullmq_job_id;
+
 const costEstimate = getCostEstimateForText(article.text_content);
 
 const relatedLinks = getRelatedLinksForArticle(id);
@@ -51,6 +55,7 @@ const relatedLinks = getRelatedLinksForArticle(id);
 <Layout>
   {statusMessage && <p>Status message: {statusMessage}</p>}
   <h1>{article.title}</h1>
+  <p>Job state: <JobState id={article.id} jobId={bullmqJobId} /></p>
 
   <Dump data={article} />
 
