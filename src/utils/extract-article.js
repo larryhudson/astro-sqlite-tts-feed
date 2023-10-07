@@ -5,6 +5,7 @@ import fsPromises from "fs/promises";
 import fs from "fs";
 import { parse as markedParse } from "marked";
 import articleTitle from "article-title";
+import pMap from "p-map";
 
 import { getExtractionRulesForDomain } from "./db.js";
 
@@ -80,8 +81,8 @@ export async function extractArticle(url) {
 
   const article = await extract(url);
 
-  const articleTitle = article.title;
-  console.log({ articleTitle });
+  const thisArticleTitle = article.title;
+  console.log({ thisArticleTitle });
   const articleHtml = article.content;
 
   const tmpHtmlPath = "./tmp-html.html";
@@ -105,11 +106,41 @@ export async function extractArticle(url) {
 
   if (!firstTagIsHeading) {
     $("body").prepend(
-      `<${chapterHeadingSelector}>${articleTitle}</${chapterHeadingSelector}>`,
+      `<${chapterHeadingSelector}>${thisArticleTitle}</${chapterHeadingSelector}>`,
     );
   }
 
-  const chapters = $(chapterHeadingSelector)
+  async function getRelatedLinkInfo(aTag) {
+    let title = "";
+    const href = $(aTag).attr("href");
+    try {
+      const linkResponse = await fetch(href);
+      const linkHtml = await linkResponse.text();
+      title = articleTitle(linkHtml);
+    } catch (e) {
+      console.log("Error fetching this URL HTML");
+      console.log(href);
+      console.log(e);
+    }
+
+    const contextQuote = $(aTag).closest("p,li").text().trim();
+
+    return {
+      url: href,
+      title,
+      contextQuote,
+    };
+  }
+
+  const linkTags = $("a");
+  const relatedLinks = await pMap(linkTags, getRelatedLinkInfo, {
+    concurrency: 2,
+  });
+
+  console.log("Related links:");
+  console.log(relatedLinks);
+
+  const articleChapters = $(chapterHeadingSelector)
     .map((headingIndex, headingTag) => {
       const contentTags = $(headingTag).nextUntil(chapterHeadingSelector);
 
@@ -130,8 +161,11 @@ export async function extractArticle(url) {
     })
     .get();
 
-  console.log(chapters);
-  return chapters;
+  console.log(articleChapters);
+  return {
+    articleChapters,
+    relatedLinks,
+  };
 }
 
 export function getChaptersFromMarkdownContent(markdownContent) {

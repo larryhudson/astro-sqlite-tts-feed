@@ -1,0 +1,42 @@
+---
+import { deleteRecordById, getRecordById, updateRecord } from "@src/utils/db";
+import { createArticle } from "@src/utils/create-article";
+
+const { id } = Astro.params;
+
+const relatedLink = getRecordById("related_links", id);
+
+if (!relatedLink) {
+  return new Response(null, {
+    status: 404,
+    statusText: "Related link not found",
+  });
+}
+
+if (Astro.request.method === "POST") {
+  const formData = await Astro.request.formData();
+  const action = formData.get("action");
+
+  if (action === "delete") {
+    const articleId = relatedLink.article_id;
+    deleteRecordById("related_links", id);
+    return Astro.redirect(`/articles/${articleId}`);
+  } else if (action === "create-article") {
+    const { title, url } = relatedLink;
+
+    const createdArticleId = await createArticle({
+      suppliedTitle: title,
+      suppliedTaskType: "auto",
+      url,
+      shouldGenerateAudio: false,
+      shouldAddRelatedLinks: true,
+    });
+
+    updateRecord("related_links", id, {
+      own_article_id: createdArticleId,
+    });
+
+    return Astro.redirect(`/articles/${createdArticleId}`);
+  }
+}
+---

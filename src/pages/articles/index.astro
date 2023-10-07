@@ -1,17 +1,11 @@
 ---
-import {
-  getArticles,
-  createArticleInDb,
-  deleteArticleFromDb,
-} from "../../utils/db";
-import { Queue } from "bullmq";
+import { getArticles, deleteArticleFromDb } from "../../utils/db";
 import Layout from "@src/components/Layout.astro";
 import NewArticleForm from "@src/components/NewArticleForm.astro";
-
-import { getArticleTitleFromUrl } from "@src/utils/extract-article";
-import { getContentMetadata, checkIfUrlIsSupported } from "@src/utils/yt-dlp";
+import { createArticle } from "@src/utils/create-article";
 
 import { checkLoggedIn, addPasswordParamToUrl } from "@src/utils/auth";
+
 const isLoggedIn = checkLoggedIn(Astro);
 if (!isLoggedIn) {
   return Astro.redirect("/auth/login");
@@ -19,47 +13,9 @@ if (!isLoggedIn) {
 
 let statusMessage;
 
-async function getTitleFromUrl(url, taskType) {
-  if (taskType === "text-to-speech") {
-    return getArticleTitleFromUrl(url);
-  }
-
-  if (taskType === "yt-dlp") {
-    const metadata = await getContentMetadata(url);
-    if (metadata.uploader) {
-      return `${metadata.title} - ${metadata.uploader}`;
-    } else {
-      return metadata.title;
-    }
-  }
-}
-
-async function inferTaskTypeFromUrl(url) {
-  const isSupportedByYtDlp = await checkIfUrlIsSupported(url);
-  if (isSupportedByYtDlp) {
-    console.log("URL is supported by yt-dlp");
-    return "yt-dlp";
-  } else {
-    console.log("URL is not supported, so using text-to-speech");
-    return "text-to-speech";
-  }
-}
-
 if (Astro.request.method === "POST") {
   const formData = await Astro.request.formData();
   const { url, action } = Object.fromEntries(formData.entries());
-
-  const suppliedTaskType = formData.get("taskType");
-  const taskType =
-    suppliedTaskType === "auto"
-      ? await inferTaskTypeFromUrl(url)
-      : suppliedTaskType;
-  const suppliedTitle = formData.get("title");
-  const title = suppliedTitle || (await getTitleFromUrl(url, taskType));
-
-  const shouldGenerateAudio = formData.get(
-    "generate-audio-after-extracting-content",
-  );
 
   const isDeleting = action === "delete";
 
@@ -72,36 +28,21 @@ if (Astro.request.method === "POST") {
     }
 
     statusMessage = "Successfully deleted article!";
-  } else {
-    // TODO: if the user doesn't enter a title, get it from the webpage / video automatically
-    const requiredFields = [url, taskType];
-    if (requiredFields.some((field) => !field)) {
-      throw new Error("Missing required fields");
-    }
+  } else if (action === "add") {
+    const suppliedTitle = formData.get("title");
+    const suppliedTaskType = formData.get("taskType");
+    const shouldGenerateAudio = formData.get(
+      "generate-audio-after-extracting-content",
+    );
 
-    const createdArticleId = createArticleInDb({
-      title,
+    await createArticle({
+      suppliedTitle,
+      suppliedTaskType,
       url,
-    });
-
-    const taskNameForType = {
-      "text-to-speech": "extractTextFromUrl",
-      "yt-dlp": "ytDlp",
-    };
-
-    const taskName = taskNameForType[taskType];
-
-    if (!taskName) {
-      throw new Error(`Invalid type: ${taskType}`);
-    }
-
-    const taskQueue = new Queue("taskQueue", {
-      connection: { host: "127.0.0.1", port: 6379 },
-    });
-    taskQueue.add(taskName, {
-      articleId: createdArticleId,
       shouldGenerateAudio,
+      shouldAddRelatedLinks: true,
     });
+
     statusMessage = "Added to queue!";
   }
 }

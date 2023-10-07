@@ -57,6 +57,24 @@ async function initialise() {
     console.log("Adding default extraction rules");
     addDefaultExtractionRules();
   }
+
+  const createRelatedLinksTable = db.prepare(
+    `CREATE TABLE IF NOT EXISTS related_links (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        article_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        url TEXT NOT NULL,
+        context_quote TEXT NULL,
+        added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        own_article_id INTEGER NULL,
+        FOREIGN KEY (article_id) REFERENCES articles(id),
+        FOREIGN KEY (own_article_id) REFERENCES articles(id)
+    )
+    `,
+  );
+
+  console.log("Creating related links table");
+  createRelatedLinksTable.run();
 }
 
 function addDefaultExtractionRules() {
