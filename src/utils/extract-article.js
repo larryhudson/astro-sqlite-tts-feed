@@ -111,16 +111,23 @@ export async function extractArticle(url) {
   }
 
   async function getRelatedLinkInfo(aTag) {
+    let title = "";
     const href = $(aTag).attr("href");
-    const linkResponse = await fetch(href);
-    const linkHtml = await linkResponse.text();
-    const linkTitle = articleTitle(linkHtml);
+    try {
+      const linkResponse = await fetch(href);
+      const linkHtml = await linkResponse.text();
+      title = articleTitle(linkHtml);
+    } catch (e) {
+      console.log("Error fetching this URL HTML");
+      console.log(href);
+      console.log(e);
+    }
 
     const contextQuote = $(aTag).closest("p,li").text().trim();
 
     return {
       url: href,
-      title: linkTitle,
+      title,
       contextQuote,
     };
   }
