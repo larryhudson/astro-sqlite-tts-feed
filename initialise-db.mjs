@@ -25,7 +25,8 @@ async function initialise() {
       mp3Length INTEGER NULL,
       status TEXT NULL,
       type TEXT NULL,
-      text_content TEXT NULL
+      text_content TEXT NULL,
+      bullmq_job_id INTEGER NULL
     )`,
   );
 

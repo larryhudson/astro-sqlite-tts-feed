@@ -18,16 +18,18 @@ if (Astro.request.method === "POST") {
   const action = formData.get("action");
 
   if (action === "generate-audio") {
-    taskQueue.add("convertTextToSpeech", { articleId: id });
+    const job = await taskQueue.add("convertTextToSpeech", { articleId: id });
+    updateArticleInDb(id, { bullmq_job_id: job.id });
     statusMessage = "Added audio generation to queue";
   }
 
   if (action === "refetch-content") {
-    taskQueue.add("extractTextFromUrl", {
+    const job = await taskQueue.add("extractTextFromUrl", {
       articleId: id,
       shouldGenerateAudio: false,
       shouldAddRelatedLinks: false,
     });
+    updateArticleInDb(id, { bullmq_job_id: job.id });
     statusMessage = "Added text extraction to queue";
   }
 
@@ -132,24 +134,24 @@ const relatedLinks = getRelatedLinksForArticle(id);
 
 <style>
   @media (min-width: 640px) {
+    table {
+      border-collapse: collapse;
+    }
 
-  table {
-    border-collapse: collapse;
-  }
+    th,
+    td {
+      padding: 0.5rem;
+      border: 1px solid black;
+    }
 
-  th, td {
-    padding: 0.5rem;
-    border: 1px solid black;
-  }
+    .url-cell {
+      width: 20%;
+    }
 
-  .url-cell {
-    width: 20%;
-  }
-
-  .context-quote-cell {
-    width: 30%;
-  }
-  /* allow a tag to wrap 
+    .context-quote-cell {
+      width: 30%;
+    }
+    /* allow a tag to wrap 
   */
   }
 

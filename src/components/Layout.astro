@@ -1,5 +1,6 @@
 ---
 import "@src/styles/global.css";
+import Htmx from "htmx.org/dist/htmx.min.js?url";
 ---
 
 <!doctype html>
@@ -8,6 +9,7 @@ import "@src/styles/global.css";
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>astro-sqlite-tts-feed</title>
+    <script is:inline src={Htmx}></script>
   </head>
   <body>
     <header>

@@ -1,4 +1,4 @@
-import { createArticleInDb } from "@src/utils/db";
+import { createArticleInDb, updateRecord } from "@src/utils/db";
 import taskQueue from "@src/utils/task-queue";
 import { checkIfUrlIsSupported, getContentMetadata } from "@src/utils/yt-dlp";
 import { getArticleTitleFromUrl } from "@src/utils/extract-article";
@@ -64,10 +64,14 @@ export async function createArticle({
     throw new Error(`Invalid type: ${taskType}`);
   }
 
-  taskQueue.add(taskName, {
+  const job = await taskQueue.add(taskName, {
     articleId: createdArticleId,
     shouldGenerateAudio,
     shouldAddRelatedLinks,
+  });
+
+  updateRecord("articles", createdArticleId, {
+    bullmq_job_id: job.id,
   });
 
   return createdArticleId;
