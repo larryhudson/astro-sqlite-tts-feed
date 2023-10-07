@@ -238,7 +238,9 @@ export function getRelatedLinksForArticle(articleId) {
 }
 
 export function deleteRelatedLinksForArticle(articleId) {
-  const deleteStatement = `DELETE FROM related_links WHERE article_id = ?`;
+  const deleteStatement = db.prepare(
+    `DELETE FROM related_links WHERE article_id = ?`,
+  );
   deleteStatement.run(articleId);
 
   console.log(`Deleted related links for article with ID ${articleId}`);
