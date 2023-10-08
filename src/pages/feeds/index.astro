@@ -1,0 +1,34 @@
+---
+import Layout from "@src/components/Layout.astro";
+import Dump from "@src/components/Dump.astro";
+import { executeQuery, createRecord } from "@src/utils/db";
+
+if (Astro.request.method === "POST") {
+  const formData = await Astro.request.formData();
+  const title = formData.get("title");
+  console.log("Creating feed with title", title)
+  const createdFeedId = createRecord("feeds", {title})
+}
+
+const feeds = executeQuery({ table: "feeds" });
+---
+
+<Layout>
+  <h1>Feeds</h1>
+  <ul>
+  {feeds.map(feed => (
+  <li><a href={`/feeds/${feed.id}`}>{feed.title}</a></li>
+  ))}
+  </ul>
+
+  <Dump data={feeds} />
+
+  <h2>Create a new feed</h2>
+  <form hx-post="." hx-target="main" hx-select="main">
+    <label>Title
+      <input name="title" />
+    </label>
+    <button>Create</button>
+
+  </form>
+</Layout>

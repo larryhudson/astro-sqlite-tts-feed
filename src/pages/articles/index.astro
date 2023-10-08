@@ -36,11 +36,13 @@ if (Astro.request.method === "POST") {
     const shouldGenerateAudio = formData.get(
       "generate-audio-after-extracting-content",
     );
+    const feedId = formData.get("feed-id");
 
     await createArticle({
       suppliedTitle,
       suppliedTaskType,
       url,
+      feedId,
       shouldGenerateAudio,
       shouldAddRelatedLinks: true,
     });

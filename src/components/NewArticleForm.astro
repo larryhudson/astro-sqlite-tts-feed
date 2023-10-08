@@ -1,3 +1,9 @@
+---
+import { executeQuery } from "@src/utils/db";
+
+const feeds = executeQuery({ table: "feeds" });
+---
+
 <form hx-post="." hx-select="main" hx-target="main">
   <h2>Add a new article</h2>
   <div>
@@ -30,6 +36,14 @@
         checked=""
       />
        Generate audio after extracting content
+    </label>
+  </div>
+  <div>
+    <label>
+      Feed
+      <select name="feed-id">
+        {feeds.map((feed) => <option value={feed.id}>{feed.title}</option>)}
+      </select>
     </label>
   </div>
 

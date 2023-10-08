@@ -9,14 +9,43 @@ const db = new Database(dbPath, {
 });
 db.pragma("journal_mode = WAL");
 
+function checkIfTableExists(tableName) {
+  const tableExistsStatement = db.prepare(
+    `SELECT name FROM sqlite_master WHERE type='table' AND name = ?;`,
+  );
+
+  const tableExistsResult = tableExistsStatement.get(tableName);
+
+  return tableExistsResult !== undefined;
+}
+
 async function initialise() {
-  // write sql for adding mp3Url column to the table
+  const creatingFeedsTable = !checkIfTableExists("feeds");
+
+  if (creatingFeedsTable) {
+    const createFeedsTable = db.prepare(
+      `CREATE TABLE IF NOT EXISTS feeds (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL
+  );`,
+    );
+
+    createFeedsTable.run();
+
+    console.log("Creating default feed");
+    const insertDefaultFeed = db.prepare(
+      `INSERT INTO feeds (title) VALUES (?)`,
+    );
+
+    insertDefaultFeed.run("Default");
+  }
 
   const createArticlesTable = db.prepare(
     `CREATE TABLE IF NOT EXISTS articles (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
       url TEXT NOT NULL,
+      feed_id INTEGER,
       read_at TIMESTAMP NULL,
       added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -26,12 +55,21 @@ async function initialise() {
       status TEXT NULL,
       type TEXT NULL,
       text_content TEXT NULL,
-      bullmq_job_id INTEGER NULL
+      bullmq_job_id INTEGER NULL,
+      FOREIGN KEY (feed_id) REFERENCES feeds(id)
     )`,
   );
 
   console.log("Creating articles table");
   createArticlesTable.run();
+
+  if (creatingFeedsTable) {
+    console.log("Setting feed_id for all articles to 1");
+    // set all articles to the default feed
+    const updateArticlesFeedId = db.prepare(`UPDATE articles SET feed_id = 1`);
+
+    updateArticlesFeedId.run();
+  }
 
   const createExtractionRulesTable = db.prepare(
     `CREATE TABLE IF NOT EXISTS extraction_rules (
