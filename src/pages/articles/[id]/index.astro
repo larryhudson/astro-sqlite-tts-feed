@@ -3,6 +3,7 @@ import {
   getArticleFromDb,
   updateArticleInDb,
   getRelatedLinksForArticle,
+  findParentArticleFromArticleId
 } from "@src/utils/db";
 import { getCostEstimateForText } from "@src/utils/azure-tts";
 import Dump from "@src/components/Dump.astro";
@@ -50,14 +51,25 @@ const bullmqJobId = article.bullmq_job_id;
 const costEstimate = getCostEstimateForText(article.text_content);
 
 const relatedLinks = getRelatedLinksForArticle(id);
+
+const parentArticle = findParentArticleFromArticleId(id);
 ---
 
 <Layout>
   {statusMessage && <p>Status message: {statusMessage}</p>}
   <h1>{article.title}</h1>
+  <p>URL: <a href={article.url}>{article.url}</a></p>
+
   <p>Job state: <JobState id={article.id} jobId={bullmqJobId} /></p>
 
   <Dump data={article} />
+
+  {parentArticle && (
+    <p>
+      This article was created from a related link in {" "}
+      <a href={`/articles/${parentArticle.id}`}>{parentArticle.title}</a>
+    </p>
+  )}
 
   <h2>Generate audio</h2>
   <p>Cost estimate: ${costEstimate}</p>
@@ -71,6 +83,7 @@ const relatedLinks = getRelatedLinksForArticle(id);
   </form>
 
   <h2>Related links</h2>
+  <p>To refetch the related links, refetch the content above.</p>
   <table-saw ratio="1/3">
     <table>
       <thead>

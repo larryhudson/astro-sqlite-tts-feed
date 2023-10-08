@@ -245,3 +245,16 @@ export function deleteRelatedLinksForArticle(articleId) {
 
   console.log(`Deleted related links for article with ID ${articleId}`);
 }
+
+export function findParentArticleFromArticleId(articleId) {
+  const relatedLinksWithThisArticleId = executeQuery({
+    table: "related_links",
+    condition: {
+      own_article_id: articleId,
+    },
+  });
+  if (relatedLinksWithThisArticleId.length === 0) return null;
+  const relatedLink = relatedLinksWithThisArticleId[0];
+  const parentArticleId = relatedLink.article_id;
+  return getRecordById("articles", parentArticleId);
+}
