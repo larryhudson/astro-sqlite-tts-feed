@@ -3,7 +3,8 @@ import {
   getArticleFromDb,
   updateArticleInDb,
   getRelatedLinksForArticle,
-  findParentArticleFromArticleId
+  findParentArticleFromArticleId,
+  executeQuery,
 } from "@src/utils/db";
 import { getCostEstimateForText } from "@src/utils/azure-tts";
 import Dump from "@src/components/Dump.astro";
@@ -38,13 +39,15 @@ if (Astro.request.method === "POST") {
   if (action === "update") {
     const title = formData.get("title");
     const text_content = formData.get("content");
+    const feed_id = formData.get("feed-id");
 
-    updateArticleInDb(id, { title, text_content });
+    updateArticleInDb(id, { title, text_content, feed_id });
     statusMessage = "Article updated";
   }
 }
 
 const article = getArticleFromDb(id);
+const feeds = executeQuery({table: "feeds"})
 
 const bullmqJobId = article.bullmq_job_id;
 
@@ -136,6 +139,17 @@ const parentArticle = findParentArticleFromArticleId(id);
     </label>
     <br />
     <label>
+      Feed
+      <select name="feed-id">
+        {feeds.map((feed) => (
+          <option value={feed.id} selected={feed.id === article.feed_id}>
+            {feed.title}
+          </option>
+          ))}
+      </select>
+      <br />
+    <label>
+
       Content
       <br />
       <textarea style="width: 100%" name="content" rows="30"

@@ -1,5 +1,5 @@
 ---
-import { getArticles, deleteArticleFromDb } from "../../utils/db";
+import { getArticles, deleteArticleFromDb, executeQuery } from "../../utils/db";
 import Layout from "@src/components/Layout.astro";
 import NewArticleForm from "@src/components/NewArticleForm.astro";
 import JobState from "@src/components/JobState.astro";
@@ -54,7 +54,10 @@ if (Astro.request.method === "POST") {
 const pageNumStr = Astro.url.searchParams.get("page") || "0";
 const pageNum = parseInt(pageNumStr);
 
-const articles = getArticles({ pageNum });
+const feeds = executeQuery({ table: "feeds" });
+const feedId = Astro.url.searchParams.get("feed-id") || "1";
+
+const articles = getArticles({ pageNum, feedId });
 ---
 
 <Layout>
@@ -63,6 +66,25 @@ const articles = getArticles({ pageNum });
   {statusMessage && <p>Status message: {statusMessage}</p>}
 
   <NewArticleForm />
+
+  <form>
+    <label
+      >Filter by feed:
+      <select name="feed-id">
+        {
+          feeds.map((feed) => (
+            <option
+              value={feed.id}
+              selected={parseInt(feedId) === feed.id ? "" : undefined}
+            >
+              {feed.title}
+            </option>
+          ))
+        }
+      </select>
+    </label>
+    <button>Filter</button>
+  </form>
 
   <table-saw ratio="1/3" zero-padding>
     <table>

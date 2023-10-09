@@ -74,19 +74,21 @@ export function executeQuery({ table, condition, limit, offset, orderBy }) {
   return statement.all(values);
 }
 
-export function getArticles({ pageNum }) {
+export function getArticles({ pageNum, feedId }) {
   const perPage = 10;
   const offset = perPage * pageNum;
   const articles = db
-    .prepare("SELECT * FROM articles ORDER BY id DESC LIMIT ? OFFSET ?")
-    .all(perPage, offset);
+    .prepare(
+      "SELECT * FROM articles WHERE feed_id = ? ORDER BY id DESC LIMIT ? OFFSET ?",
+    )
+    .all(feedId, perPage, offset);
   return articles;
 }
 
-export function getArticlesWithMp3Url() {
+export function getArticlesWithMp3UrlForFeed(feedId) {
   const articles = db
-    .prepare("SELECT * FROM articles WHERE mp3Url IS NOT NULL")
-    .all();
+    .prepare("SELECT * FROM articles WHERE mp3Url IS NOT NULL AND feed_id = ?")
+    .all(feedId);
   return articles;
 }
 
@@ -98,6 +100,7 @@ export function getArticleFromDb(id) {
 export function createArticleInDb({
   title,
   url,
+  feedId,
   mp3Url,
   mp3Duration,
   mp3Length,
@@ -105,6 +108,7 @@ export function createArticleInDb({
   const createdArticleId = createRecord("articles", {
     title,
     url,
+    feed_id: feedId,
     mp3Url,
     mp3Duration,
     mp3Length,

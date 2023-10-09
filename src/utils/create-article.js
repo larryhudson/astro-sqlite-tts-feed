@@ -52,7 +52,7 @@ export async function createArticle({
   const createdArticleId = createArticleInDb({
     title,
     url,
-    feed_id: feedId,
+    feedId,
   });
 
   const taskNameForType = {
