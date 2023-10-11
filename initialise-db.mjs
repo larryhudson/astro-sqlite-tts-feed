@@ -114,6 +114,40 @@ async function initialise() {
 
   console.log("Creating related links table");
   createRelatedLinksTable.run();
+
+  const createDocumentsTable = db.prepare(
+    `CREATE TABLE IF NOT EXISTS documents (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        filename TEXT NOT NULL,
+        filepath TEXT NOT NULL,
+        document_type TEXT NOT NULL,
+        added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        bullmq_job_id INTEGER NULL
+    )
+    `,
+  );
+
+  console.log("Creating documents table");
+  createDocumentsTable.run();
+
+  const createDocumentChaptersTable = db.prepare(
+    `CREATE TABLE IF NOT EXISTS document_chapters (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        document_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        chapter_number INTEGER NULL,
+        text_content TEXT NULL,
+        added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        own_article_id INTEGER NULL,
+        FOREIGN KEY (document_id) REFERENCES documents(id),
+        FOREIGN KEY (own_article_id) REFERENCES articles(id)
+    )
+    `,
+  );
+
+  console.log("Creating document chapters table");
+  createDocumentChaptersTable.run();
 }
 
 function addDefaultExtractionRules() {

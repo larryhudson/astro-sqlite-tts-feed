@@ -25,6 +25,7 @@ articles.db
 articles.db-shm
 articles.db-wal
 
+uploads/
 static/articles
 test-epub
 test-pdf

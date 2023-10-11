@@ -34,14 +34,10 @@ export async function createArticle({
   suppliedTaskType,
   url,
   feedId,
+  textContent,
   shouldGenerateAudio,
   shouldAddRelatedLinks,
 }) {
-  const requiredFields = [url, suppliedTaskType];
-  if (requiredFields.some((field) => !field)) {
-    throw new Error("Missing required fields for creating article");
-  }
-
   const taskType =
     suppliedTaskType === "auto"
       ? await inferTaskTypeFromUrl(url)
@@ -53,6 +49,7 @@ export async function createArticle({
     title,
     url,
     feedId,
+    textContent,
   });
 
   const taskNameForType = {

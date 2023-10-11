@@ -2,6 +2,7 @@ import { Worker } from "bullmq";
 import { extractTextFromUrl } from "./tasks/extractTextFromUrl.mjs";
 import { convertTextToSpeech } from "./tasks/convertTextToSpeech.mjs";
 import { ytDlp } from "./tasks/ytDlp.mjs";
+import { extractChaptersFromDocument } from "./tasks/extractChaptersFromDocument.mjs";
 
 const worker = new Worker(
   "taskQueue",
@@ -16,6 +17,10 @@ const worker = new Worker(
 
     if (job.name === "ytDlp") {
       await ytDlp(job.data);
+    }
+
+    if (job.name === "extractChaptersFromDocument") {
+      await extractChaptersFromDocument(job.data);
     }
   },
   { connection: { host: "127.0.0.1", port: 6379 } },

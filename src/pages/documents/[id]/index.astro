@@ -1,0 +1,54 @@
+---
+import Layout from "@src/components/Layout.astro";
+import Dump from "@src/components/Dump.astro";
+
+import { getRecordById, executeQuery } from "@src/utils/db";
+
+const { id } = Astro.params;
+
+const document = getRecordById("documents", id);
+const documentChapters = executeQuery({
+  table: "document_chapters",
+  condition: { document_id: id },
+});
+---
+
+<Layout>
+  <h1>Document: {document.title}</h1>
+
+  <Dump data={document} />
+
+  <h2>Chapters</h2>
+
+  {
+    documentChapters.map((chapter) => (
+      <div>
+        <h3>{chapter.title}</h3>
+        <form method="POST" action={`/document-chapters/${chapter.id}`}>
+          <button name="action" value="delete">
+            Delete
+          </button>
+          {chapter.own_article_id ? (
+            <a href={`/articles/${chapter.own_article_id}`}>Go to article</a>
+          ) : (
+            <button name="action" value="create-article">
+              Create article
+            </button>
+          )}
+        </form>
+        <pre class="chapter-text">{chapter.text_content}</pre>
+      </div>
+    ))
+  }
+
+  <Dump data={documentChapters} />
+</Layout>
+
+<style>
+  .chapter-text {
+    height: 200px;
+    overflow: scroll;
+    background-color: lightgray;
+    border: 2px solid black;
+  }
+</style>
