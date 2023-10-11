@@ -96,7 +96,7 @@ async function extractChaptersFromEpub(epubFilePath) {
     console.log("chapters inside epub function");
     console.log(chapters);
 
-    // fs.rmdirSync(tempDirectory, { recursive: true });
+    fs.rmdirSync(tempDirectory, { recursive: true });
 
     return chapters;
   } catch (error) {
