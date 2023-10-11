@@ -33,6 +33,7 @@ export async function createArticle({
   suppliedTitle,
   suppliedTaskType,
   url,
+  feedId,
   shouldGenerateAudio,
   shouldAddRelatedLinks,
 }) {
@@ -51,6 +52,7 @@ export async function createArticle({
   const createdArticleId = createArticleInDb({
     title,
     url,
+    feedId,
   });
 
   const taskNameForType = {

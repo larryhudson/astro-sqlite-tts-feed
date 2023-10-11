@@ -1,6 +1,6 @@
 if (typeof import.meta.env.APP_PASSWORD === "undefined") {
   throw new Error(
-    "APP_PASSWORD environment variable is not defined. Please define it."
+    "APP_PASSWORD environment variable is not defined. Please define it.",
   );
 }
 
@@ -13,6 +13,15 @@ export function checkLoggedIn(Astro) {
   const password = passwordCookie.value;
 
   return password === APP_PASSWORD;
+}
+
+export function getPasswordFromAstro(Astro) {
+  const passwordCookie = Astro.cookies.get("astro-sqlite-tts-feed-password");
+  if (!passwordCookie) return false;
+
+  const password = passwordCookie.value;
+
+  return password;
 }
 
 export function checkPassword(password) {

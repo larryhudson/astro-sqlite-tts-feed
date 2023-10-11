@@ -1,8 +1,9 @@
-import { getArticlesWithMp3Url } from "@src/utils/db";
+import { getArticlesWithMp3UrlForFeed, getRecordById } from "@src/utils/db";
 import { addPasswordParamToUrl, checkPassword } from "@src/utils/auth";
 
 export async function all(context) {
   const requestUrl = context.url;
+  console.log({ requestUrl });
   const passwordParam = requestUrl.searchParams.get("password");
 
   const isCorrectPassword = checkPassword(passwordParam);
@@ -13,22 +14,25 @@ export async function all(context) {
     });
   }
 
-  const articles = getArticlesWithMp3Url();
+  const feedId = context.params.id;
+  const feed = getRecordById("feeds", feedId);
+
+  const articles = getArticlesWithMp3UrlForFeed(feedId);
   const podcast = {
-    title: "TTS Feed",
+    title: `TTS Feed: ${feed.title}`,
     author: "Larry Hudson",
     authorEmail: "larryhudson@hey.com",
     category: "Technology",
     description: "A podcast feed for the TTS Feed",
-    feedUrl: "http://tts-feed.larryhudson.io/rss.xml",
-    homeUrl: "http://tts-feed.larryhudson.io",
+    feedUrl: requestUrl.href,
+    homeUrl: requestUrl.origin,
     imageUrl: "http://tts-feed.larryhudson.io/assets/images/astro.png",
     language: "en",
     location: "Torquay, Australia",
     frequency: "Weekly",
     keywords: "podcast, rss, feed",
     pubDate: new Date().toUTCString(),
-    site: "http://tts-feed.larryhudson.io",
+    site: requestUrl.origin,
   };
 
   const xml = `<?xml version="1.0" encoding="UTF-8" ?>
@@ -71,13 +75,13 @@ export async function all(context) {
         <pubDate>${new Date(article.added_at).toUTCString()}</pubDate>
         <enclosure url="${podcast.site}${addPasswordParamToUrl(
           article.mp3Url,
-          passwordParam
+          passwordParam,
         )}" type="audio/mpeg" length="${article.mp3Length}" />
         <itunes:duration>${article.mp3Duration}</itunes:duration>
         <guid isPermaLink="false">${article.mp3Url}</guid>
         <itunes:explicit>no</itunes:explicit>
         <description>${article.url}</description>
-      </item>`
+      </item>`,
     )}
   </channel>
 </rss>`;

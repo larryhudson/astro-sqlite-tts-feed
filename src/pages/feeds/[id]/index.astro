@@ -1,0 +1,30 @@
+---
+import { getRecordById } from "@src/utils/db";
+import { getPasswordFromAstro } from "@src/utils/auth";
+
+import Layout from "@src/components/Layout.astro";
+import Dump from "@src/components/Dump.astro";
+
+const { id } = Astro.params;
+
+const feed = getRecordById("feeds", id);
+console.log(Astro.url);
+const podcastFeedUrl = new URL(Astro.url.href + "/rss.xml");
+const password = getPasswordFromAstro(Astro);
+podcastFeedUrl.searchParams.set("password", password)
+---
+
+<Layout>
+  <h1>
+    Feed: {feed.title}
+  </h1>
+  <h2>Go to articles</h2>
+  <form action="/articles/">
+    <button name="feed-id" value={feed.id}>Go to articles</button>
+  </form>
+
+  <h2>Podcast feed URL</h2>
+  <Dump data={podcastFeedUrl} />
+
+  <Dump data={feed} />
+</Layout>
