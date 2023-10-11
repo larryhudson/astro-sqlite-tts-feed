@@ -1,7 +1,7 @@
 import pMap from "p-map";
 import fs from "fs";
 import path from "path";
-import unzipper from "unzipper";
+import AdmZip from "adm-zip";
 import cheerio from "cheerio";
 import { convert } from "html-to-text";
 import glob from "fast-glob";
@@ -16,6 +16,12 @@ async function findHTMLFiles(directory) {
 
   const htmlFiles = await glob(filePatterns, options);
   return htmlFiles;
+}
+
+async function unzipFileToDirectory(zipFilePath, destinationFolder) {
+  const zip = new AdmZip(zipFilePath);
+
+  zip.extractAllTo(destinationFolder);
 }
 
 async function extractChaptersFromEpub(epubFilePath) {
@@ -36,10 +42,7 @@ async function extractChaptersFromEpub(epubFilePath) {
 
     await fs.promises.mkdir(epubTxtDirectory);
 
-    await fs
-      .createReadStream(epubFilePath)
-      .pipe(unzipper.Extract({ path: tempDirectory }))
-      .promise();
+    await unzipFileToDirectory(epubFilePath, tempDirectory);
 
     const htmlFiles = await findHTMLFiles(tempDirectory);
 
@@ -93,7 +96,7 @@ async function extractChaptersFromEpub(epubFilePath) {
     console.log("chapters inside epub function");
     console.log(chapters);
 
-    fs.rmdirSync(tempDirectory, { recursive: true });
+    // fs.rmdirSync(tempDirectory, { recursive: true });
 
     return chapters;
   } catch (error) {
