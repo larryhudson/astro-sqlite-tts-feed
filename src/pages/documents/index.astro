@@ -1,0 +1,72 @@
+---
+import Layout from "@src/components/Layout.astro";
+import Dump from "@src/components/Dump.astro";
+import {
+  createRecord,
+  executeQuery,
+  updateRecord,
+  executeQuery,
+} from "@src/utils/db";
+import { uploadFile } from "@src/utils/file-uploads";
+import path from "path";
+import taskQueue from "@src/utils/task-queue";
+
+if (Astro.request.method === "POST") {
+  const formData = await Astro.request.formData();
+  const file = formData.get("file");
+
+  // check file is allowed file type
+  const filename = file.name;
+  const filetype = path.extname(filename).slice(1);
+  const allowedFileTypes = ["epub"];
+  const isAllowedFiletype = allowedFileTypes.includes(filetype);
+  if (!isAllowedFiletype) {
+    throw new Error("File type", filetype, "not allowed");
+  }
+
+  // upload the file to the uploads directory
+  const filepath = await uploadFile(file);
+
+  const createdDocumentId = createRecord("documents", {
+    title: filename,
+    filename,
+    filepath,
+    document_type: filetype,
+  });
+
+  const bullMqJob = await taskQueue.add("extractChaptersFromDocument", {
+    documentId: createdDocumentId,
+  });
+
+  updateRecord("documents", createdDocumentId, { bullmq_job_id: bullMqJob.id });
+
+  console.log({ filename, filetype });
+}
+
+const documents = executeQuery({ table: "documents" });
+---
+
+<Layout>
+  <h1>Documents</h1>
+
+  <ul>
+    {
+      documents.map((document) => (
+        <li>
+          <a href={`/documents/${document.id}/`}>
+            {document.id} &ndash; {document.title}
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+
+  <form method="POST" enctype="multipart/form-data">
+    <label
+      >File:
+      <input type="file" name="file" />
+    </label>
+
+    <button>Upload</button>
+  </form>
+</Layout>

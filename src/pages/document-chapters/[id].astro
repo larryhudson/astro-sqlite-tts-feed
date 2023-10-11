@@ -1,0 +1,44 @@
+---
+import { deleteRecordById, getRecordById, updateRecord } from "@src/utils/db";
+import { createArticle } from "@src/utils/create-article";
+
+const { id } = Astro.params;
+
+const documentChapter = getRecordById("document_chapters", id);
+
+if (!documentChapter) {
+  return new Response(null, {
+    status: 404,
+    statusText: "Document chapter not found",
+  });
+}
+
+const document = getRecordById("documents", documentChapter.document_id);
+
+if (Astro.request.method === "POST") {
+  const formData = await Astro.request.formData();
+  const action = formData.get("action");
+
+  if (action === "delete") {
+    const documentId = documentChapter.document_id;
+    deleteRecordById("document_chapters", id);
+    return Astro.redirect(`/documents/${documentId}`);
+  } else if (action === "create-article") {
+    const articleTitle = `${document.title} - ${documentChapter.title}`;
+
+    const createdArticleId = await createArticle({
+      suppliedTitle: articleTitle,
+      suppliedTaskType: "text-to-speech",
+      textContent: documentChapter.text_content,
+      shouldGenerateAudio: false,
+      shouldAddRelatedLinks: false,
+    });
+
+    updateRecord("document_chapters", id, {
+      own_article_id: createdArticleId,
+    });
+
+    return Astro.redirect(`/articles/${createdArticleId}`);
+  }
+}
+---

@@ -4,7 +4,7 @@ import fs from "fs";
 
 const dbFilePath = path.resolve("articles.db");
 
-const db = new Database(dbFilePath, {
+export const db = new Database(dbFilePath, {
   verbose: console.log,
 });
 db.pragma("journal_mode = WAL");
@@ -101,6 +101,7 @@ export function createArticleInDb({
   title,
   url,
   feedId,
+  textContent,
   mp3Url,
   mp3Duration,
   mp3Length,
@@ -109,6 +110,7 @@ export function createArticleInDb({
     title,
     url,
     feed_id: feedId,
+    text_content: textContent,
     mp3Url,
     mp3Duration,
     mp3Length,
