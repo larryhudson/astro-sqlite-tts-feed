@@ -26,9 +26,12 @@ if (Astro.request.method === "POST") {
   } else if (action === "create-article") {
     const articleTitle = `${document.title} - ${documentChapter.title}`;
 
+    const requestUrl = Astro.url.href;
+
     const createdArticleId = await createArticle({
       suppliedTitle: articleTitle,
       suppliedTaskType: "text-to-speech",
+      url: requestUrl,
       textContent: documentChapter.text_content,
       shouldGenerateAudio: false,
       shouldAddRelatedLinks: false,

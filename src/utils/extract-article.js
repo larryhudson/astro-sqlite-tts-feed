@@ -174,6 +174,18 @@ export function getChaptersFromMarkdownContent(markdownContent) {
 
   const $ = cheerio.load(html);
 
+  const numHeadings = $("h2").length;
+
+  if (numHeadings === 0) {
+    const text = convertHtmlToText(html);
+    return [
+      {
+        title: "",
+        text,
+      },
+    ];
+  }
+
   const chapters = $("h2")
     .map((headingIndex, headingTag) => {
       const contentTags = $(headingTag).nextUntil("h2").addBack();
