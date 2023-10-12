@@ -2,6 +2,8 @@
 import { deleteRecordById, getRecordById, updateRecord } from "@src/utils/db";
 import { createArticle } from "@src/utils/create-article";
 
+import DocumentChapter from "@src/components/DocumentChapter.astro";
+
 const { id } = Astro.params;
 
 const documentChapter = getRecordById("document_chapters", id);
@@ -24,6 +26,8 @@ if (Astro.request.method === "POST") {
     deleteRecordById("document_chapters", id);
     return Astro.redirect(`/documents/${documentId}`);
   } else if (action === "create-article") {
+    const feedId = formData.get("feed-id");
+
     const articleTitle = `${document.title} - ${documentChapter.title}`;
 
     const requestUrl = Astro.url.href;
@@ -33,6 +37,7 @@ if (Astro.request.method === "POST") {
       suppliedTaskType: "text-to-speech",
       url: requestUrl,
       textContent: documentChapter.text_content,
+      feedId,
       shouldGenerateAudio: false,
       shouldAddRelatedLinks: false,
     });
@@ -40,8 +45,10 @@ if (Astro.request.method === "POST") {
     updateRecord("document_chapters", id, {
       own_article_id: createdArticleId,
     });
-
-    return Astro.redirect(`/articles/${createdArticleId}`);
   }
 }
+
+const chapter = getRecordById("document_chapters", id);
 ---
+
+<DocumentChapter {chapter} />

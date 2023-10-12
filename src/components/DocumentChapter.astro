@@ -1,0 +1,33 @@
+---
+const { chapter } = Astro.props;
+const setFeedId = Astro.props.setFeedId || 1;
+
+const postAction = `/document-chapters/${chapter.id}`;
+---
+
+<div class="document-chapter">
+  <h3>{chapter.title}</h3>
+  <form hx-post={postAction} hx-target="closest .document-chapter" hx-select=".document-chapter" method="POST" action={postAction}>
+    <input type="hidden" name="feed-id" value={setFeedId} />
+    <button name="action" value="delete"> Delete</button>
+    {
+      chapter.own_article_id ? (
+        <a href={`/articles/${chapter.own_article_id}`}>Go to article</a>
+      ) : (
+        <button name="action" value="create-article">
+          Create article
+        </button>
+      )
+    }
+  </form>
+  <pre class="chapter-text">{chapter.text_content}</pre>
+</div>
+
+<style>
+  .chapter-text {
+    height: 200px;
+    overflow: scroll;
+    background-color: lightgray;
+    border: 2px solid black;
+  }
+</style>

@@ -17,6 +17,8 @@ if (Astro.request.method === "POST") {
 
   // check file is allowed file type
   const filename = file.name;
+  const documentTitle = path.basename(filename, path.extname(filename));
+
   const filetype = path.extname(filename).slice(1);
   const allowedFileTypes = ["epub"];
   const isAllowedFiletype = allowedFileTypes.includes(filetype);
@@ -28,7 +30,7 @@ if (Astro.request.method === "POST") {
   const filepath = await uploadFile(file);
 
   const createdDocumentId = createRecord("documents", {
-    title: filename,
+    title: documentTitle,
     filename,
     filepath,
     document_type: filetype,

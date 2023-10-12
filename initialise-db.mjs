@@ -115,8 +115,11 @@ async function initialise() {
   console.log("Creating related links table");
   createRelatedLinksTable.run();
 
-  const createDocumentsTable = db.prepare(
-    `CREATE TABLE IF NOT EXISTS documents (
+  const creatingDocumentsTable = !checkIfTableExists("documents");
+
+  if (creatingDocumentsTable) {
+    const createDocumentsTable = db.prepare(
+      `CREATE TABLE IF NOT EXISTS documents (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
         filename TEXT NOT NULL,
@@ -124,12 +127,23 @@ async function initialise() {
         document_type TEXT NOT NULL,
         added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         bullmq_job_id INTEGER NULL
+        feed_id INTEGER NULL,
+        FOREIGN KEY (feed_id) REFERENCES feeds(id)
     )
     `,
-  );
+    );
 
-  console.log("Creating documents table");
-  createDocumentsTable.run();
+    console.log("Creating documents table");
+    createDocumentsTable.run();
+  } else {
+    // add feed_id column
+    const addFeedIdColumn = db.prepare(
+      `ALTER TABLE documents ADD COLUMN feed_id INTEGER NULL REFERENCES feeds(id)`,
+    );
+
+    console.log("Adding feed_id column to documents table");
+    addFeedIdColumn.run();
+  }
 
   const createDocumentChaptersTable = db.prepare(
     `CREATE TABLE IF NOT EXISTS document_chapters (

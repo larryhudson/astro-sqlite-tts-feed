@@ -6,22 +6,15 @@ import cheerio from "cheerio";
 import { convert } from "html-to-text";
 import glob from "fast-glob";
 
-async function findHTMLFiles(directory) {
-  const filePatterns = ["**/*.html", "**/*.xhtml"];
-  const options = {
-    cwd: directory,
-    absolute: true,
-    onlyFiles: true,
-  };
-
-  const htmlFiles = await glob(filePatterns, options);
-  return htmlFiles;
-}
-
 async function unzipFileToDirectory(zipFilePath, destinationFolder) {
   const zip = new AdmZip(zipFilePath);
 
   zip.extractAllTo(destinationFolder);
+}
+
+async function findFileInDirectory(directory, filename) {
+  const files = await glob(`${directory}/**/${filename}`);
+  return files[0];
 }
 
 async function extractChaptersFromEpub(epubFilePath) {
@@ -44,14 +37,43 @@ async function extractChaptersFromEpub(epubFilePath) {
 
     await unzipFileToDirectory(epubFilePath, tempDirectory);
 
-    const htmlFiles = await findHTMLFiles(tempDirectory);
-
-    async function handleHtmlPath(htmlFilePath) {
-      const htmlFilename = path.basename(
-        htmlFilePath,
-        path.extname(htmlFilePath),
+    async function getEpubChapters(tempDirectory) {
+      const contentsFilePath = await findFileInDirectory(
+        tempDirectory,
+        "toc.ncx",
       );
-      const htmlContent = await fs.promises.readFile(htmlFilePath, "utf8");
+
+      const contentsFileDirectory = path.dirname(contentsFilePath);
+
+      const contentsFileContent = await fs.promises.readFile(
+        contentsFilePath,
+        "utf8",
+      );
+
+      const $ = cheerio.load(contentsFileContent, {
+        xmlMode: true,
+      });
+
+      return $("navPoint")
+        .map((index, element) => {
+          const title = $(element).find("navLabel > text").text().trim();
+          const htmlSrc = $(element).find("content").attr("src");
+          const htmlPath = path.join(contentsFileDirectory, htmlSrc);
+
+          return {
+            title,
+            htmlPath,
+          };
+        })
+        .get();
+    }
+
+    const chapters = await getEpubChapters(tempDirectory);
+
+    async function getTextForChapter(chapter) {
+      const { title, htmlPath } = chapter;
+
+      const htmlContent = await fs.promises.readFile(htmlPath, "utf8");
       // process the html with cheerio
       const $ = cheerio.load(htmlContent);
       const selectorsToRemove = ["sup", "img", "figure"];
@@ -87,18 +109,20 @@ async function extractChaptersFromEpub(epubFilePath) {
       });
 
       return {
+        title,
         text_content: plainText,
-        title: htmlFilename,
       };
     }
 
-    const chapters = await pMap(htmlFiles, handleHtmlPath, { concurrency: 2 });
+    const chaptersWithText = await pMap(chapters, getTextForChapter, {
+      concurrency: 2,
+    });
     console.log("chapters inside epub function");
-    console.log(chapters);
+    console.log(chaptersWithText);
 
     fs.rmdirSync(tempDirectory, { recursive: true });
 
-    return chapters;
+    return chaptersWithText;
   } catch (error) {
     console.error("Error extracting text from EPUB:", error);
     return [];
