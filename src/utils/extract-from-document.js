@@ -57,7 +57,7 @@ async function extractChaptersFromEpub(epubFilePath) {
       return $("navPoint")
         .map((index, element) => {
           const title = $(element).find("navLabel > text").text().trim();
-          const htmlSrc = $(element).find("content").attr("src");
+          const htmlSrc = $(element).find("content").attr("src").split("#")[0]; // strip off id
           const htmlPath = path.join(contentsFileDirectory, htmlSrc);
 
           return {
