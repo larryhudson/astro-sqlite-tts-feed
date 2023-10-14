@@ -10,6 +10,12 @@ import {
 import { uploadFile } from "@src/utils/file-uploads";
 import path from "path";
 import taskQueue from "@src/utils/task-queue";
+import { getCurrentUserIdFromAstro } from "@src/utils/auth";
+
+const currentUserId = getCurrentUserIdFromAstro(Astro);
+if (!currentUserId) {
+  return Astro.redirect("/auth/login");
+}
 
 if (Astro.request.method === "POST") {
   const formData = await Astro.request.formData();
@@ -34,6 +40,7 @@ if (Astro.request.method === "POST") {
     filename,
     filepath,
     document_type: filetype,
+    user_id: currentUserId,
   });
 
   const bullMqJob = await taskQueue.add("extractChaptersFromDocument", {
@@ -45,7 +52,7 @@ if (Astro.request.method === "POST") {
   console.log({ filename, filetype });
 }
 
-const documents = executeQuery({ table: "documents" });
+const documents = executeQuery({ table: "documents", user_id: currentUserId });
 ---
 
 <Layout>

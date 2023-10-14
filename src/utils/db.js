@@ -39,6 +39,12 @@ export function getRecordById(table, id) {
   return statement.get(parsedId);
 }
 
+export function findRecord(args) {
+  const results = executeQuery(args);
+  if (results.length === 0) throw new Error("Record not found");
+  return results[0];
+}
+
 export function executeQuery({ table, condition, limit, offset, orderBy }) {
   let whereClause = "";
   let limitClause = "";

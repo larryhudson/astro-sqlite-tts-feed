@@ -6,10 +6,14 @@ import JobState from "@src/components/JobState.astro";
 
 import { createArticle } from "@src/utils/create-article";
 
-import { checkLoggedIn, addPasswordParamToUrl } from "@src/utils/auth";
+import {
+  checkLoggedIn,
+  addPasswordParamToUrl,
+  getCurrentUserIdFromAstro,
+} from "@src/utils/auth";
 
-const isLoggedIn = checkLoggedIn(Astro);
-if (!isLoggedIn) {
+const currentUserId = getCurrentUserIdFromAstro(Astro);
+if (!currentUserId) {
   return Astro.redirect("/auth/login");
 }
 
@@ -23,7 +27,7 @@ if (Astro.request.method === "POST") {
 
   if (isDeleting) {
     const idToDelete = parseInt(formData.get("id"));
-    const deleted = deleteArticleFromDb(idToDelete);
+    const deleted = deleteArticleFromDb(idToDelete, currentUserId);
 
     if (!deleted) {
       throw new Error(`Couldn't delete article with id ${idToDelete}`);
@@ -45,6 +49,7 @@ if (Astro.request.method === "POST") {
       feedId,
       shouldGenerateAudio,
       shouldAddRelatedLinks: true,
+      currentUserId,
     });
 
     statusMessage = "Added to queue!";
@@ -54,10 +59,13 @@ if (Astro.request.method === "POST") {
 const pageNumStr = Astro.url.searchParams.get("page") || "0";
 const pageNum = parseInt(pageNumStr);
 
-const feeds = executeQuery({ table: "feeds" });
+const feeds = executeQuery({
+  table: "feeds",
+  condition: { user_id: currentUserId },
+});
 const feedId = Astro.url.searchParams.get("feed-id") || "1";
 
-const articles = getArticles({ pageNum, feedId });
+const articles = getArticles({ pageNum, feedId, userId });
 ---
 
 <Layout>

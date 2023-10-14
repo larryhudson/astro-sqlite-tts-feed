@@ -3,12 +3,13 @@ import {
   getExtractionRulesFromDb,
   createExtractionRule,
   deleteExtractionRule,
+  executeQuery,
 } from "../../utils/db";
 import Layout from "@src/components/Layout.astro";
 
-import { checkLoggedIn, addPasswordParamToUrl } from "@src/utils/auth";
-const isLoggedIn = checkLoggedIn(Astro);
-if (!isLoggedIn) {
+import { getCurrentUserIdFromAstro } from "@src/utils/auth";
+const currentUserId = getCurrentUserIdFromAstro(Astro);
+if (!currentUserId) {
   return Astro.redirect("/auth/login");
 }
 
@@ -16,8 +17,7 @@ let statusMessage;
 
 if (Astro.request.method === "POST") {
   const formData = await Astro.request.formData();
-  const { domain, is_active, title, rule_type, content, action } =
-    Object.fromEntries(formData.entries());
+  const action = formData.get("action");
 
   const isDeleting = action === "delete";
 
@@ -36,6 +36,10 @@ if (Astro.request.method === "POST") {
       throw new Error("Missing required fields");
     }
 
+    const { domain, is_active, title, rule_type, content } = Object.fromEntries(
+      formData.entries(),
+    );
+
     console.log("Is active?");
     console.log(is_active);
 
@@ -44,6 +48,7 @@ if (Astro.request.method === "POST") {
       is_active: is_active === "1" ? 1 : 0,
       title,
       rule_type,
+      user_id: currentUserId,
       content,
     });
 
@@ -51,7 +56,12 @@ if (Astro.request.method === "POST") {
   }
 }
 
-const extractionRules = getExtractionRulesFromDb();
+const extractionRules = executeQuery({
+  table: "extraction_rules",
+  condition: {
+    user_id: currentUserId,
+  },
+});
 ---
 
 <Layout>

@@ -11,8 +11,20 @@ import Dump from "@src/components/Dump.astro";
 import Layout from "@src/components/Layout.astro";
 import JobState from "@src/components/JobState.astro";
 import taskQueue from "@src/utils/task-queue";
+import { getCurrentUserIdFromAstro } from "@src/utils/auth";
+
+const currentUserId = getCurrentUserIdFromAstro(Astro);
+if (!currentUserId) {
+  return Astro.redirect("/auth/login");
+}
 
 const { id } = Astro.params;
+const articleBeforeActions = getArticleFromDb(id);
+const userOwnsArticle = articleBeforeActions.user_id === currentUserId;
+
+if (!userOwnsArticle) {
+  return new Response(null, { status: 403, statusText: "Not your article" });
+}
 
 let statusMessage;
 
@@ -47,7 +59,7 @@ if (Astro.request.method === "POST") {
 }
 
 const article = getArticleFromDb(id);
-const feeds = executeQuery({table: "feeds"})
+const feeds = executeQuery({ table: "feeds" });
 
 const bullmqJobId = article.bullmq_job_id;
 
@@ -67,12 +79,14 @@ const parentArticle = findParentArticleFromArticleId(id);
 
   <Dump data={article} />
 
-  {parentArticle && (
-    <p>
-      This article was created from a related link in {" "}
-      <a href={`/articles/${parentArticle.id}`}>{parentArticle.title}</a>
-    </p>
-  )}
+  {
+    parentArticle && (
+      <p>
+        This article was created from a related link in{" "}
+        <a href={`/articles/${parentArticle.id}`}>{parentArticle.title}</a>
+      </p>
+    )
+  }
 
   <h2>Generate audio</h2>
   <p>Cost estimate: ${costEstimate}</p>
@@ -141,53 +155,55 @@ const parentArticle = findParentArticleFromArticleId(id);
     <label>
       Feed
       <select name="feed-id">
-        {feeds.map((feed) => (
-          <option value={feed.id} selected={feed.id === article.feed_id}>
-            {feed.title}
-          </option>
-          ))}
+        {
+          feeds.map((feed) => (
+            <option value={feed.id} selected={feed.id === article.feed_id}>
+              {feed.title}
+            </option>
+          ))
+        }
       </select>
       <br />
-    <label>
-
-      Content
-      <br />
-      <textarea style="width: 100%" name="content" rows="30"
-        >{article.text_content}</textarea
-      >
+      <label>
+        Content
+        <br />
+        <textarea style="width: 100%" name="content" rows="30"
+          >{article.text_content}</textarea
+        >
+      </label>
+      <button type="submit" name="action" value="update">Save</button>
     </label>
-    <button type="submit" name="action" value="update">Save</button>
   </form>
-</Layout>
 
-<script>
-  import { Tablesaw } from "@zachleat/table-saw";
-</script>
+  <script>
+    import { Tablesaw } from "@zachleat/table-saw";
+  </script>
 
-<style>
-  @media (min-width: 640px) {
-    table {
-      border-collapse: collapse;
-    }
+  <style>
+    @media (min-width: 640px) {
+      table {
+        border-collapse: collapse;
+      }
 
-    th,
-    td {
-      padding: 0.5rem;
-      border: 1px solid black;
-    }
+      th,
+      td {
+        padding: 0.5rem;
+        border: 1px solid black;
+      }
 
-    .url-cell {
-      width: 20%;
-    }
+      .url-cell {
+        width: 20%;
+      }
 
-    .context-quote-cell {
-      width: 30%;
-    }
-    /* allow a tag to wrap 
+      .context-quote-cell {
+        width: 30%;
+      }
+      /* allow a tag to wrap 
   */
-  }
+    }
 
-  a {
-    word-break: break-all;
-  }
-</style>
+    a {
+      word-break: break-all;
+    }
+  </style>
+</Layout>

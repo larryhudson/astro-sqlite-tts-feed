@@ -1,13 +1,15 @@
 ---
 import {
-  checkLoggedIn,
   checkPassword,
-  setPasswordCookie,
+  setSessionCookie,
+  getCurrentUserIdFromAstro,
+  createSession,
 } from "@src/utils/auth";
+import { findRecord } from "@src/utils/db";
 import Layout from "@src/components/Layout.astro";
 
-const isLoggedIn = checkLoggedIn(Astro);
-if (isLoggedIn) {
+const currentUserId = getCurrentUserIdFromAstro(Astro);
+if (currentUserId) {
   return Astro.redirect("/articles/");
 }
 
@@ -15,12 +17,22 @@ let errorMessage;
 
 if (Astro.request.method === "POST") {
   const formData = await Astro.request.formData();
+  const enteredEmail = formData.get("email");
   const enteredPassword = formData.get("password");
 
-  const isCorrectPassword = checkPassword(enteredPassword);
+  const existingUser = findRecord({
+    table: "users",
+    condition: { email: enteredEmail },
+  });
+
+  const isCorrectPassword = checkPassword(
+    enteredPassword,
+    existingUser.password,
+  );
 
   if (isCorrectPassword) {
-    setPasswordCookie(Astro, enteredPassword);
+    const sessionKey = createSession(existingUser.id);
+    setSessionCookie(Astro, sessionKey);
     return Astro.redirect("/articles/");
   } else {
     errorMessage = "Incorrect password";
@@ -33,6 +45,9 @@ if (Astro.request.method === "POST") {
 
   <form method="POST">
     {errorMessage && <p>{errorMessage}</p>}
+    <label>Email</label>
+    <input type="email" name="email" />
+
     <label>Password</label>
     <input type="password" name="password" />
 

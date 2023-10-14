@@ -1,6 +1,8 @@
 import Database from "better-sqlite3";
 import fs from "fs";
 import path from "path";
+import dotenv from "dotenv";
+dotenv.config();
 
 const dbPath = path.resolve("articles.db");
 
@@ -20,13 +22,44 @@ function checkIfTableExists(tableName) {
 }
 
 async function initialise() {
+  const creatingUsersTable = !checkIfTableExists("users");
+
+  if (creatingUsersTable) {
+    const createUsersStatement = db.prepare(`CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  email TEXT NOT NULL,
+  name TEXT NOT NULL,
+  is_admin INTEGER NOT NULL DEFAULT 0,
+  password TEXT NOT NULL,
+  added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+)`);
+
+    console.log("Creating users table");
+    createUsersStatement.run();
+
+    console.log("Inserting admin user");
+
+    const insertDefaultUser = db.prepare(`
+      INSERT INTO users (email, name, is_admin, password) VALUES (?, ?, ?, ?)
+    `);
+
+    insertDefaultUser.run(
+      process.env.APP_ADMIN_USER,
+      process.env.APP_ADMIN_NAME,
+      1,
+      process.env.APP_ADMIN_PASSWORD,
+    );
+  }
+
   const creatingFeedsTable = !checkIfTableExists("feeds");
 
   if (creatingFeedsTable) {
     const createFeedsTable = db.prepare(
       `CREATE TABLE IF NOT EXISTS feeds (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  title TEXT NOT NULL
+  title TEXT NOT NULL,
+  user_id INTEGER NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id)
   );`,
     );
 
@@ -34,10 +67,10 @@ async function initialise() {
 
     console.log("Creating default feed");
     const insertDefaultFeed = db.prepare(
-      `INSERT INTO feeds (title) VALUES (?)`,
+      `INSERT INTO feeds (title, user_id) VALUES (?, ?)`,
     );
 
-    insertDefaultFeed.run("Default");
+    insertDefaultFeed.run("Default", 1);
   }
 
   const createArticlesTable = db.prepare(
@@ -45,6 +78,7 @@ async function initialise() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
       url TEXT NOT NULL,
+      user_id INTEGER NOT NULL DEFAULT 1,
       feed_id INTEGER,
       read_at TIMESTAMP NULL,
       added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -56,6 +90,7 @@ async function initialise() {
       type TEXT NULL,
       text_content TEXT NULL,
       bullmq_job_id INTEGER NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id),
       FOREIGN KEY (feed_id) REFERENCES feeds(id)
     )`,
   );
@@ -79,7 +114,9 @@ async function initialise() {
       domain TEXT NULL,
       added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       rule_type TEXT NOT NULL DEFAULT 'delete_selector',
-      content TEXT NOT NULL
+      user_id INTEGER NOT NULL DEFAULT 1,
+      content TEXT NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) 
       )`,
   );
 
@@ -121,6 +158,7 @@ async function initialise() {
     const createDocumentsTable = db.prepare(
       `CREATE TABLE IF NOT EXISTS documents (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL DEFAULT 0,
         title TEXT NOT NULL,
         filename TEXT NOT NULL,
         filepath TEXT NOT NULL,
@@ -128,7 +166,8 @@ async function initialise() {
         added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         bullmq_job_id INTEGER NULL
         feed_id INTEGER NULL,
-        FOREIGN KEY (feed_id) REFERENCES feeds(id)
+        FOREIGN KEY (feed_id) REFERENCES feeds(id),
+        FOREIGN KEY (user_id) REFERENCES users(id)
     )
     `,
     );
