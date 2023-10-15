@@ -1,0 +1,229 @@
+---
+const { text } = Astro.props;
+---
+
+<div>
+  <input type="hidden" id="speed-reader-input" value={text} />
+
+  <button id="startButton">Start Reading</button>
+  <button id="pauseButton">Pause</button>
+
+  <label for="speedControl">Speed: <span id="speedLabel">1</span>&times;</label>
+  <input
+    type="range"
+    id="speedControl"
+    min="0.5"
+    max="3"
+    value="1"
+    step="0.1"
+  /><br /><br />
+
+  <div id="wordDisplay" class="flex-container">
+    <span id="beforeVowel"></span>
+    <span id="vowel"></span>
+    <span id="afterVowel"></span>
+  </div>
+
+  <label for="progressSlider">Progress:</label>
+  <input type="range" id="progressSlider" min="0" max="100" value="0" />
+</div>
+
+<script>
+  let isPaused = false;
+  let words = [];
+  let currentIndex = 0;
+
+  let speedMultiplier = 1;
+  let defaultDelay = 250;
+  const shortPauseDelay = 400;
+  const longPauseDelay = 750; // 1 second pause after punctuation
+
+  const pauseButton = document.getElementById("pauseButton");
+  pauseButton.addEventListener("click", togglePause);
+
+  function togglePause() {
+    isPaused = !isPaused;
+
+    if (isPaused) {
+      pauseButton.textContent = "Resume";
+    } else {
+      pauseButton.textContent = "Pause";
+      displayNextWord();
+    }
+  }
+
+  const startButton = document.getElementById("startButton");
+  startButton.addEventListener("click", startReading);
+
+  function startReading() {
+    const text = document.getElementById("speed-reader-input").value;
+    words = text.split(/\s+/);
+    currentIndex = 0;
+
+    document.getElementById("progressSlider").max = words.length - 1;
+    startButton.disabled = true;
+    displayNextWord();
+  }
+
+  function moveToPosition(value) {
+    currentIndex = parseInt(value);
+    displayNextWord();
+  }
+
+  const progressSlider = document.getElementById("progressSlider");
+  progressSlider.addEventListener("input", (e) => {
+    moveToPosition(e.target.value);
+  });
+
+  function getMiddleVowelIndex(word) {
+    const vowels = ["a", "e", "i", "o", "u", "A", "E", "I", "O", "U"];
+    const middle = Math.floor(word.length / 2);
+    let leftIndex = middle,
+      rightIndex = middle;
+
+    while (leftIndex >= 0 || rightIndex < word.length) {
+      if (vowels.includes(word[leftIndex])) return leftIndex;
+      if (vowels.includes(word[rightIndex])) return rightIndex;
+      leftIndex--;
+      rightIndex++;
+    }
+    return -1; // Return -1 if no vowel is found
+  }
+
+  function displayNextWord() {
+    if (isPaused) return;
+    if (currentIndex >= words.length) {
+      document.getElementById("wordDisplay").textContent = "Done!";
+      return;
+    }
+
+    let word = words[currentIndex];
+    let middleVowelIndex = getMiddleVowelIndex(word);
+
+    if (middleVowelIndex === -1) {
+      middleVowelIndex = Math.floor(word.length / 2); // Default to middle character if no vowel
+    }
+
+    let beforeVowel = word.slice(0, middleVowelIndex);
+    let vowel = word[middleVowelIndex];
+    let afterVowel = word.slice(middleVowelIndex + 1);
+
+    document.getElementById("beforeVowel").textContent = beforeVowel;
+    document.getElementById("vowel").textContent = vowel;
+    document.getElementById("afterVowel").textContent = afterVowel;
+
+    document.getElementById("progressSlider").value = currentIndex;
+
+    currentIndex++;
+
+    const delay = getDelayDuration(word);
+    const delayWithMultiplier = delay / speedMultiplier;
+    setTimeout(displayNextWord, delayWithMultiplier);
+  }
+
+  function getDelayDuration(word) {
+    const shortPausePunctuation = [",", ";", "-", "–"];
+    const longPausePunctuation = [".", "!", "?"];
+
+    const lastChar = word[word.length - 1];
+    if (shortPausePunctuation.includes(lastChar)) return shortPauseDelay;
+    if (longPausePunctuation.includes(lastChar)) return longPauseDelay;
+    return defaultDelay;
+  }
+
+  const speedLabel = document.getElementById("speedLabel");
+
+  function adjustSpeed(value) {
+    speedMultiplier = parseFloat(value);
+    speedLabel.textContent = value;
+  }
+
+  const speedInput = document.getElementById("speedControl");
+  speedInput.addEventListener("input", (e) => {
+    adjustSpeed(e.target.value);
+  });
+</script>
+
+<style>
+  #userInput {
+    width: 70%;
+    height: 150px;
+  }
+
+  #wordDisplay {
+    text-align: center;
+    margin-top: 100px;
+    margin-bottom: 100px;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 2.5rem;
+  }
+
+  #progressSlider {
+    width: 100%;
+  }
+
+  .flex-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #beforeVowel,
+  #afterVowel {
+    width: 20ch;
+    overflow: hidden;
+  }
+
+  #beforeVowel {
+    text-align: right;
+  }
+
+  #afterVowel {
+    text-align: left;
+  }
+
+  #vowel {
+    font-weight: bold;
+    width: 1ch;
+    color: red;
+    text-align: center;
+  }
+
+  #controls {
+    width: 70%;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    background-color: #f9f9f9;
+  }
+
+  button[disabled] {
+    background-color: #ccc;
+    color: black;
+  }
+
+  button {
+    padding: 10px 15px;
+    margin-right: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: #007bff;
+    color: #fff;
+    transition: background-color 0.3s ease;
+  }
+
+  button:not([disabled]):hover {
+    background-color: #0056b3;
+  }
+
+  textarea {
+    width: 100%;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    resize: vertical;
+  }
+</style>
