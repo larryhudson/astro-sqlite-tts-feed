@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import dotenv from "dotenv";
 dotenv.config();
+import { hashPassword } from "./src/utils/auth.js";
 
 const dbPath = path.resolve("articles.db");
 
@@ -30,8 +31,9 @@ async function initialise() {
   email TEXT NOT NULL,
   name TEXT NOT NULL,
   is_admin INTEGER NOT NULL DEFAULT 0,
+  approved_at TIMESTAMP NULL,
   password TEXT NOT NULL,
-  added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )`);
 
     console.log("Creating users table");
@@ -43,11 +45,16 @@ async function initialise() {
       INSERT INTO users (email, name, is_admin, password) VALUES (?, ?, ?, ?)
     `);
 
+    const hashedPassword = hashPassword(
+      process.env.APP_ADMIN_PASSWORD,
+      process.env.APP_HASHING_SECRET,
+    );
+
     insertDefaultUser.run(
-      process.env.APP_ADMIN_USER,
+      process.env.APP_ADMIN_EMAIL,
       process.env.APP_ADMIN_NAME,
       1,
-      process.env.APP_ADMIN_PASSWORD,
+      hashedPassword,
     );
   }
 
@@ -164,7 +171,7 @@ async function initialise() {
         filepath TEXT NOT NULL,
         document_type TEXT NOT NULL,
         added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        bullmq_job_id INTEGER NULL
+        bullmq_job_id INTEGER NULL,
         feed_id INTEGER NULL,
         FOREIGN KEY (feed_id) REFERENCES feeds(id),
         FOREIGN KEY (user_id) REFERENCES users(id)

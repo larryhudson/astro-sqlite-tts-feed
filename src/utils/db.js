@@ -106,6 +106,7 @@ export function getArticleFromDb(id) {
 export function createArticleInDb({
   title,
   url,
+  userId,
   feedId,
   textContent,
   mp3Url,
@@ -115,6 +116,7 @@ export function createArticleInDb({
   const createdArticleId = createRecord("articles", {
     title,
     url,
+    user_id: userId,
     feed_id: feedId,
     text_content: textContent,
     mp3Url,

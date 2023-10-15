@@ -2,16 +2,10 @@
 import {
   checkPassword,
   setSessionCookie,
-  getCurrentUserIdFromAstro,
   createSession,
 } from "@src/utils/auth";
 import { findRecord } from "@src/utils/db";
 import Layout from "@src/components/Layout.astro";
-
-const currentUserId = getCurrentUserIdFromAstro(Astro);
-if (currentUserId) {
-  return Astro.redirect("/articles/");
-}
 
 let errorMessage;
 
@@ -24,6 +18,8 @@ if (Astro.request.method === "POST") {
     table: "users",
     condition: { email: enteredEmail },
   });
+
+  console.log(existingUser);
 
   const isCorrectPassword = checkPassword(
     enteredPassword,

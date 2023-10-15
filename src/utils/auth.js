@@ -3,12 +3,6 @@ import Redis from "ioredis";
 
 const redisClient = new Redis();
 
-if (typeof import.meta.env.APP_PASSWORD === "undefined") {
-  throw new Error(
-    "APP_PASSWORD environment variable is not defined. Please define it.",
-  );
-}
-
 export function getSessionKeyFromAstro(Astro) {
   const passwordCookie = Astro.cookies.get("astro-sqlite-tts-feed-session");
   if (!passwordCookie) return false;
@@ -26,8 +20,10 @@ export function getCurrentUserIdFromAstro(Astro) {
   return userId;
 }
 
-function hashPassword(password) {
-  const HASHING_SECRET = import.meta.env.APP_HASHING_SECRET;
+export function hashPassword(password, secret) {
+  const HASHING_SECRET = secret || import.meta.env.APP_HASHING_SECRET;
+  console.log("password", password);
+  console.log("HASHING_SECRET", HASHING_SECRET);
 
   if (!HASHING_SECRET) {
     throw new Error(
@@ -72,12 +68,14 @@ export function deleteSession(Astro) {
   redisClient.del(sessionKey);
 }
 
-export function getUserIdFromSessionKey(sessionKey) {
-  return redisClient.get(sessionKey);
+export async function getUserIdFromSessionKey(sessionKey) {
+  return await redisClient.get(sessionKey);
 }
 
 export function checkPassword(suppliedPassword, passwordHash) {
   const suppliedHash = hashPassword(suppliedPassword);
+  console.log("suppliedHash", suppliedHash);
+  console.log("passwordHash", passwordHash);
   return suppliedHash === passwordHash;
 }
 

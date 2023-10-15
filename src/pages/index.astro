@@ -1,6 +1,6 @@
 ---
-import { checkLoggedIn } from "@src/utils/auth";
-const isLoggedIn = checkLoggedIn(Astro);
+const isLoggedIn = !!Astro.locals.userId;
+console.log(Astro.locals.userId);
 if (!isLoggedIn) {
   return Astro.redirect("/auth/login");
 } else {

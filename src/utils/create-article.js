@@ -37,6 +37,7 @@ export async function createArticle({
   textContent,
   shouldGenerateAudio,
   shouldAddRelatedLinks,
+  userId,
 }) {
   const taskType =
     suppliedTaskType === "auto"
@@ -50,6 +51,7 @@ export async function createArticle({
     url,
     feedId,
     textContent,
+    userId,
   });
 
   const taskNameForType = {
