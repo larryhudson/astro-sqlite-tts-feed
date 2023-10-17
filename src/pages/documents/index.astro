@@ -1,55 +1,21 @@
 ---
 import Layout from "@src/components/Layout.astro";
-import Dump from "@src/components/Dump.astro";
-import {
-  createRecord,
-  executeQuery,
-  updateRecord,
-  executeQuery,
-} from "@src/utils/db";
-import { uploadFile } from "@src/utils/file-uploads";
-import path from "path";
-import taskQueue from "@src/utils/task-queue";
-import { getCurrentUserIdFromAstro } from "@src/utils/auth";
+import { executeQuery } from "@src/utils/db";
+import { createDocument } from "@src/utils/create-document";
 
-const currentUserId = getCurrentUserIdFromAstro(Astro);
-if (!currentUserId) {
-  return Astro.redirect("/auth/login");
-}
+const userId = Astro.locals.userId;
+
+let errorMessage;
 
 if (Astro.request.method === "POST") {
   const formData = await Astro.request.formData();
   const file = formData.get("file");
 
-  // check file is allowed file type
-  const filename = file.name;
-  const documentTitle = path.basename(filename, path.extname(filename));
-
-  const filetype = path.extname(filename).slice(1);
-  const allowedFileTypes = ["epub"];
-  const isAllowedFiletype = allowedFileTypes.includes(filetype);
-  if (!isAllowedFiletype) {
-    throw new Error("File type", filetype, "not allowed");
+  try {
+    await createDocument(file);
+  } catch (error) {
+    errorMessage = error.message;
   }
-
-  // upload the file to the uploads directory
-  const filepath = await uploadFile(file);
-
-  const createdDocumentId = createRecord("documents", {
-    title: documentTitle,
-    filename,
-    filepath,
-    document_type: filetype,
-    user_id: currentUserId,
-  });
-
-  const bullMqJob = await taskQueue.add("extractChaptersFromDocument", {
-    documentId: createdDocumentId,
-  });
-
-  updateRecord("documents", createdDocumentId, { bullmq_job_id: bullMqJob.id });
-
-  console.log({ filename, filetype });
 }
 
 const documents = executeQuery({ table: "documents", user_id: currentUserId });

@@ -11,54 +11,52 @@ import { addPasswordParamToUrl } from "@src/utils/auth";
 const userId = Astro.locals.userId;
 
 let statusMessage;
+let errorMessage;
 
-if (Astro.request.method === "POST") {
-  const formData = await Astro.request.formData();
-  const { url, action } = Object.fromEntries(formData.entries());
+try {
+  if (Astro.request.method === "POST") {
+    const formData = await Astro.request.formData();
+    const action = formData.get("action");
 
-  const isDeleting = action === "delete";
+    const isDeleting = action === "delete";
 
-  if (isDeleting) {
-    const idToDelete = parseInt(formData.get("id"));
-    const deleted = deleteArticleFromDb(idToDelete, userId);
+    if (isDeleting) {
+      const idToDelete = parseInt(formData.get("id"));
+      deleteArticleFromDb(idToDelete, userId);
+      statusMessage = "Successfully deleted article!";
+    } else if (action === "add") {
+      // TODO: maybe just pass in the formdata here?
+      await createArticle({
+        suppliedTitle: formData.get("title"),
+        suppliedTaskType: formData.get("taskType"),
+        url: formData.get("url"),
+        feedId: formData.get("feed-id"),
+        shouldGenerateAudio: formData.get(
+          "generate-audio-after-extracting-content",
+        ),
+        shouldAddRelatedLinks: true,
+        userId,
+      });
 
-    if (!deleted) {
-      throw new Error(`Couldn't delete article with id ${idToDelete}`);
+      statusMessage = "Added to queue!";
     }
-
-    statusMessage = "Successfully deleted article!";
-  } else if (action === "add") {
-    const suppliedTitle = formData.get("title");
-    const suppliedTaskType = formData.get("taskType");
-    const shouldGenerateAudio = formData.get(
-      "generate-audio-after-extracting-content",
-    );
-    const feedId = formData.get("feed-id");
-
-    await createArticle({
-      suppliedTitle,
-      suppliedTaskType,
-      url,
-      feedId,
-      shouldGenerateAudio,
-      shouldAddRelatedLinks: true,
-      userId,
-    });
-
-    statusMessage = "Added to queue!";
   }
+
+  const pageNumStr = Astro.url.searchParams.get("page") || "0";
+  const pageNum = parseInt(pageNumStr);
+
+  const feeds = executeQuery({
+    table: "feeds",
+    userId,
+  });
+
+  // TODO: need to check if the feed belongs to the user
+
+  const articles = getArticles({ pageNum, feedId, userId });
+} catch (error) {
+  errorMessage = error.message;
+  statusMessage = error.message;
 }
-
-const pageNumStr = Astro.url.searchParams.get("page") || "0";
-const pageNum = parseInt(pageNumStr);
-
-const feeds = executeQuery({
-  table: "feeds",
-  condition: { user_id: userId },
-});
-const feedId = Astro.url.searchParams.get("feed-id") || "1";
-
-const articles = getArticles({ pageNum, feedId, userId });
 ---
 
 <Layout>

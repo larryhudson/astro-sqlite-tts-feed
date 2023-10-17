@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import Redis from "ioredis";
+import { findRecord } from "@src/utils/db";
 
 const redisClient = new Redis();
 
@@ -13,7 +14,6 @@ export function getSessionKeyFromAstro(Astro) {
 }
 
 export function getCurrentUserIdFromAstro(Astro) {
-  // TODO: implement real sessions
   const sessionKey = getSessionKeyFromAstro(Astro);
   const userId = getUserIdFromSessionKey(sessionKey);
 
@@ -53,19 +53,45 @@ we look it up in redis and get the user id
 if we don't get a user id, we redirect to login page
 */
 
+export async function handleLogin(Astro, email, password) {
+  const existingUser = findRecord({
+    table: "users",
+    condition: { email },
+  });
+
+  if (!existingUser) {
+    throw new Error("User with that email does not exist");
+  }
+
+  const isCorrectPassword = checkPassword(password, existingUser.password);
+
+  if (!isCorrectPassword) {
+    throw new Error("Incorrect password");
+  }
+
+  const sessionKey = createSession(existingUser.id);
+  setSessionCookie(Astro, sessionKey);
+  return true;
+}
+
+export async function handleLogout(Astro) {
+  await deleteSession(Astro);
+}
+
 function generateSessionKey() {
   return crypto.randomBytes(16).toString("hex");
 }
 
-export function createSession(userId) {
+export async function createSession(userId) {
   const sessionKey = generateSessionKey();
-  redisClient.set(sessionKey, userId, "EX", SEVEN_DAYS); // Set the session to expire in 24 hours
+  await redisClient.set(sessionKey, userId, "EX", SEVEN_DAYS); // Set the session to expire in 24 hours
   return sessionKey;
 }
 
-export function deleteSession(Astro) {
+export async function deleteSession(Astro) {
   const sessionKey = getSessionKeyFromAstro(Astro);
-  redisClient.del(sessionKey);
+  await redisClient.del(sessionKey);
+  deleteSessionCookie(Astro);
 }
 
 export async function getUserIdFromSessionKey(sessionKey) {
@@ -89,6 +115,12 @@ export function setSessionCookie(Astro, sessionKey) {
     sameSite: "lax",
     secure: true,
     httpOnly: true,
+  });
+}
+
+export function deleteSessionCookie(Astro) {
+  Astro.cookies.delete("astro-sqlite-tts-feed-session", {
+    path: "/",
   });
 }
 

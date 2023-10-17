@@ -1,0 +1,12 @@
+---
+import { handleLogout } from "@src/utils/auth";
+
+let errorMessage;
+
+try {
+  await handleLogout(Astro);
+  return Astro.redirect("/");
+} catch (error) {
+  errorMessage = error.message;
+}
+---

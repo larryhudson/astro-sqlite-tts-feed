@@ -45,7 +45,18 @@ export function findRecord(args) {
   return results[0];
 }
 
-export function executeQuery({ table, condition, limit, offset, orderBy }) {
+export function executeQuery({
+  table,
+  condition = {},
+  limit,
+  offset,
+  orderBy,
+  userId,
+}) {
+  if (userId) {
+    condition.user_id = userId;
+  }
+
   let whereClause = "";
   let limitClause = "";
   let offsetClause = "";

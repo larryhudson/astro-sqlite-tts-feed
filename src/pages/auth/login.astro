@@ -1,37 +1,18 @@
 ---
-import {
-  checkPassword,
-  setSessionCookie,
-  createSession,
-} from "@src/utils/auth";
-import { findRecord } from "@src/utils/db";
+import { handleLogin } from "@src/utils/auth";
 import Layout from "@src/components/Layout.astro";
 
 let errorMessage;
 
 if (Astro.request.method === "POST") {
   const formData = await Astro.request.formData();
-  const enteredEmail = formData.get("email");
-  const enteredPassword = formData.get("password");
+  const email = formData.get("email");
+  const password = formData.get("password");
 
-  const existingUser = findRecord({
-    table: "users",
-    condition: { email: enteredEmail },
-  });
-
-  console.log(existingUser);
-
-  const isCorrectPassword = checkPassword(
-    enteredPassword,
-    existingUser.password,
-  );
-
-  if (isCorrectPassword) {
-    const sessionKey = createSession(existingUser.id);
-    setSessionCookie(Astro, sessionKey);
-    return Astro.redirect("/articles/");
-  } else {
-    errorMessage = "Incorrect password";
+  try {
+    await handleLogin(Astro, email, password);
+  } catch (error) {
+    errorMessage = error.message;
   }
 }
 ---
