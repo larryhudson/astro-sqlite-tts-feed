@@ -52,6 +52,7 @@ async function initialise() {
       mp3Url TEXT NULL,
       mp3Duration TEXT NULL,
       mp3Length INTEGER NULL,
+      timings_url TEXT NULL,
       status TEXT NULL,
       type TEXT NULL,
       text_content TEXT NULL,
@@ -126,7 +127,7 @@ async function initialise() {
         filepath TEXT NOT NULL,
         document_type TEXT NOT NULL,
         added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        bullmq_job_id INTEGER NULL
+        bullmq_job_id INTEGER NULL,
         feed_id INTEGER NULL,
         FOREIGN KEY (feed_id) REFERENCES feeds(id)
     )

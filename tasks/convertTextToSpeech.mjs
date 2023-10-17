@@ -31,7 +31,8 @@ export async function convertTextToSpeech({ articleId }) {
 
   const articleChapters = getChaptersFromMarkdownContent(markdownContent);
 
-  const chaptersWithAudio = await getAudioForChapters(articleChapters);
+  const { chaptersWithAudio, combinedTimings } =
+    await getAudioForChapters(articleChapters);
 
   const articleHash = md5(markdownContent);
   const articlePath = path.join("static", "articles", `${articleHash}.mp3`);
@@ -82,6 +83,10 @@ export async function convertTextToSpeech({ articleId }) {
 
   await fs.promises.writeFile(articlePath, bufferWithMetadata);
 
+  const timingsPath = path.join("static", "articles", `${articleHash}.json`);
+  const timingsJson = JSON.stringify(combinedTimings);
+  await fs.promises.writeFile(timingsPath, timingsJson);
+
   const durationSecs = await getAudioDurationInSeconds(articlePath);
 
   const mp3Duration = secsToMMSS(durationSecs);
@@ -98,6 +103,7 @@ export async function convertTextToSpeech({ articleId }) {
 
   const articleInDb = updateArticleInDb(articleId, {
     mp3Url: `/static/articles/${articleHash}.mp3`,
+    timings_url: `/static/articles/${articleHash}.json`,
     mp3Duration,
     mp3Length,
   });

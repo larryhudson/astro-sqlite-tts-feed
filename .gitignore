@@ -31,5 +31,6 @@ test-epub
 test-pdf
 
 tmp*
+.tmp-azure-text-to-speech
 
 

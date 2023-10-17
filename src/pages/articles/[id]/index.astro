@@ -10,7 +10,7 @@ import { getCostEstimateForText } from "@src/utils/azure-tts";
 import Dump from "@src/components/Dump.astro";
 import Layout from "@src/components/Layout.astro";
 import JobState from "@src/components/JobState.astro";
-import SpeedReader from "@src/components/SpeedReader.astro";
+import SpeedReaderAudio from "@src/components/SpeedReaderAudio.astro";
 
 import taskQueue from "@src/utils/task-queue";
 
@@ -50,6 +50,15 @@ if (Astro.request.method === "POST") {
 
 const article = getArticleFromDb(id);
 const feeds = executeQuery({ table: "feeds" });
+// article.timings_url = /static/articles/${textHash}.json
+// read the timings file
+let timings = [];
+if (article.timings_url) {
+  const currentOrigin = new URL(Astro.request.url).origin;
+  timings = await fetch(currentOrigin + article.timings_url).then((res) =>
+    res.json(),
+  );
+}
 
 const bullmqJobId = article.bullmq_job_id;
 
@@ -136,7 +145,10 @@ const parentArticle = findParentArticleFromArticleId(id);
 
   <details style="border: 1px solid black; padding: 0.5rem; margin: 0.5rem">
     <summary>Speed read this article</summary>
-    <SpeedReader text={article.text_content} />
+    <SpeedReaderAudio
+      timings={JSON.stringify(timings)}
+      mp3Url={article.mp3Url}
+    />
   </details>
 
   <h2>Edit article text</h2>

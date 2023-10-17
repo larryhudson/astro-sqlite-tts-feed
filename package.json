@@ -30,6 +30,7 @@
     "htmx.org": "^1.9.6",
     "js-md5": "^0.8.0",
     "marked": "^9.0.3",
+    "microsoft-cognitiveservices-speech-sdk": "^1.32.0",
     "mp3-duration": "^1.1.0",
     "node-id3": "^0.2.6",
     "p-map": "^6.0.0",
